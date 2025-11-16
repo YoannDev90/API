@@ -1,0 +1,92 @@
+{
+  "auto": {
+    "name": "Auto",
+    "author": "AlphaLLM",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/alephalpha.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/alephalpha.svg"
+  },
+  "mistral": {
+    "name": "Mistral",
+    "author": "Mistral AI",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/mistral-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/mistral.svg"
+  },
+  "openai": {
+    "name": "ChatGPT",
+    "author": "OpenAI",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/openai.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/openai.svg"
+  },
+  "claude": {
+    "name": "Claude",
+    "author": "Anthropic",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/claude-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/claude.svg"
+  },
+  "llama": {
+    "name": "Llama",
+    "author": "Meta",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/meta-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/meta.svg"
+  },
+  "deepseek": {
+    "name": "DeepSeek",
+    "author": "DeepSeek",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/deepseek-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/deepseek.svg"
+  },
+  "qwen": {
+    "name": "Qwen",
+    "author": "Alibaba",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/qwen-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/qwen.svg"
+  },
+  "gemini": {
+    "name": "Gemini",
+    "author": "Google",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/gemini-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/gemini.svg"
+  },
+  "grok": {
+    "name": "Grok",
+    "author": "xAI",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/grok.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/grok.svg"
+  },
+  "perplexity": {
+    "name": "Perplexity",
+    "author": "Perplexity AI",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/perplexity-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/perplexity.svg"
+  },
+  "cohere": {
+    "name": "Cohere",
+    "author": "Cohere",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/cohere-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/cohere.svg"
+  },
+  "evilgpt": {
+    "name": "EvilGPT",
+    "author": "Community",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/minimax-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/minimax.svg"
+  },
+  "glm": {
+    "name": "GLM-4.5",
+    "author": "Zhipu AI",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/zai.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/zai.svg"
+  },
+  "kimi": {
+    "name": "Kimi-K2",
+    "author": "Moonshot AI",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/moonshot.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/moonshot.svg"
+  },
+  "phi": {
+    "name": "Phi-4",
+    "author": "Microsoft",
+    "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/copilot-color.svg",
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/copilot.svg"
+  }
+}

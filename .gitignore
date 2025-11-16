@@ -1,3 +1,9 @@
+
+publish.sh
+logs/
+alphallm-api.service
+sudoers-alphallm
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
