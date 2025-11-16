@@ -42,7 +42,8 @@ def create_app() -> FastAPI:
         description="API pour le projet AlphaLLM",
         version="2.0.0",
         docs_url="/docs",
-        redoc_url="/redoc"
+        redoc_url="/redoc",
+        openapi_url="/openapi-schema"
     )
 
     # Ajouter les middlewares dans le bon ordre (dernier ajouté = exécuté en premier)

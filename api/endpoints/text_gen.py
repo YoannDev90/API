@@ -3,7 +3,7 @@ from typing import Optional, List
 
 router = APIRouter()
 
-@router.post("/generate", tags=["text"])
+@router.post("/text/generate", tags=["text"])
 async def generate_text(
     prompt: str = Form(...),
     model: Optional[str] = Form("auto"),

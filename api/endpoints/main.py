@@ -13,7 +13,6 @@ logger = getLogger("alphallm-api")
 @router.get("/", tags=["general"])
 async def read_root(request: Request):
     """Point d'entrée principal de l'API"""
-    # Récupérer l'IP réelle du client (Cloudflare ou autre proxy)
     client_ip = request.scope.get("client_ip", request.client.host if request.client else "unknown")
     logger.info(f"Requête reçue à la racine de l'API depuis {client_ip}")
     return {
@@ -29,7 +28,6 @@ async def favicon():
     favicon_path = Path(__file__).parent.parent.parent / "favicon.ico"
     if favicon_path.exists():
         return FileResponse(favicon_path, media_type="image/x-icon", headers={"Cache-Control": "public, max-age=86400"})
-    # Fallback si le fichier n'existe pas
     return {"code": "404"}
 
 
@@ -84,15 +82,10 @@ async def debug_headers(request: Request):
     client_ip = request.scope.get("client_ip", request.client.host if request.client else "unknown")
     logger.info(f"Requête de debug reçue depuis {client_ip}")
     
-    # Convertir les headers en dict
     headers = dict(request.headers)
     
-    # Extraire les informations Cloudflare et de géolocalisation
     cloudflare_info = {
-        # Client IP - Adresse IP réelle du visiteur
         "cf_connecting_ip": headers.get("cf-connecting-ip", "N/A"),
-        
-        # Géolocalisation (si activé dans Cloudflare)
         "cf_ip_country": headers.get("cf-ipcountry", "N/A"),
         "cf_ip_city": headers.get("cf-ipcity", "N/A"),
         "cf_ip_continent": headers.get("cf-ipcontinent", "N/A"),
@@ -100,25 +93,18 @@ async def debug_headers(request: Request):
         "cf_ip_longitude": headers.get("cf-iplongitude", "N/A"),
         "cf_ip_postal_code": headers.get("cf-ippostalcode", "N/A"),
         "cf_ip_timezone": headers.get("cf-iptimezone", "N/A"),
-        
-        # Informations de requête Cloudflare
         "cf_ray": headers.get("cf-ray", "N/A"),
         "cf_request_id": headers.get("cf-request-id", "N/A"),
         "cf_visitor": headers.get("cf-visitor", "N/A"),
-        
-        # TLS / SSL Cloudflare
         "cf_tls_version": headers.get("cf-tls-version", "N/A"),
         "cf_tls_cipher": headers.get("cf-tls-cipher", "N/A"),
         "cf_tls_client_auth": headers.get("cf-tls-client-auth", "N/A"),
-        
-        # Autres infos utiles
         "true_client_ip": headers.get("true-client-ip", "N/A"),
         "x_forwarded_for": headers.get("x-forwarded-for", "N/A"),
         "x_forwarded_proto": headers.get("x-forwarded-proto", "N/A"),
         "x_forwarded_host": headers.get("x-forwarded-host", "N/A"),
     }
     
-    # Nettoyer les valeurs "N/A" pour plus de clarté
     cloudflare_info = {k: v for k, v in cloudflare_info.items() if v != "N/A"}
     
     return {
