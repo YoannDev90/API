@@ -11,13 +11,18 @@ import requests
 import time
 import threading
 import queue
+import os
 from datetime import datetime
 from typing import Optional
+from pathlib import Path
 from colorama import Fore, Style, init
 from config import config
 
 # Initialiser colorama
 init(autoreset=True)
+
+# Variable globale pour stocker l'instance du handler Grafana (ne doit jamais être fermée)
+_grafana_handler_instance = None
 
 
 class ColoredFormatter(logging.Formatter):
@@ -74,22 +79,26 @@ class GrafanaLogsHandler(logging.Handler):
             daemon=True,
             name="GrafanaLogWorker"
         )
+        self.worker_thread.daemon = True  # Force daemon mode
         self.worker_thread.start()
         
     def _worker(self):
         """Worker thread qui envoie les logs à Grafana"""
-        while not self.stop_event.is_set():
+        while True:
             try:
-                log_entry = self.log_queue.get(timeout=5)
-                if log_entry is None:  # Signal d'arrêt
+                # Attendre un log (timeout court pour réactivité)
+                log_entry = self.log_queue.get(timeout=0.5)
+                
+                if log_entry is None:  # Signal d'arrêt (ne devrait jamais arriver)
                     break
                     
+                # Envoyer ce log immédiatement
                 self._send_to_grafana(log_entry)
                 
             except queue.Empty:
-                continue
+                pass
             except Exception as e:
-                print(f"⚠️  Erreur worker Grafana: {type(e).__name__}: {e}", file=sys.stderr)
+                pass  # Ne pas bloquer le worker
     
     def _send_to_grafana(self, log_entry: dict):
         """Envoie un log à Grafana (à appeler depuis le worker thread)"""
@@ -128,19 +137,19 @@ class GrafanaLogsHandler(logging.Handler):
                 auth=(self.user_id, self.api_key),
                 json=payload,
                 headers=headers,
-                timeout=5  # Timeout réduit
+                timeout=1.5
             )
 
-            # Vérification du statut de réponse
+            # Vérification silencieuse du statut de réponse
             if response.status_code not in (200, 201, 204):
-                print(f"⚠️  Erreur Grafana (HTTP {response.status_code})", file=sys.stderr)
+                pass
 
         except requests.exceptions.Timeout:
-            pass  # Silencieux - le worker ne doit pas bloquer
+            pass
         except requests.exceptions.ConnectionError:
-            pass  # Silencieux
-        except Exception as e:
-            pass  # Silencieux - ne pas bloquer le worker
+            pass
+        except Exception:
+            pass
         
     def emit(self, record: logging.LogRecord):
         """Ajoute le log à la queue (non-bloquant)"""
@@ -165,16 +174,15 @@ class GrafanaLogsHandler(logging.Handler):
             self.log_queue.put(log_entry, block=False)
             
         except queue.Full:
-            pass  # Queue pleine, ignorer ce log
+            pass
         except Exception:
-            pass  # Ne pas bloquer l'application
+            pass
     
     def close(self):
-        """Fermer proprement le handler"""
-        self.stop_event.set()
-        self.log_queue.put(None)  # Signal d'arrêt
-        self.worker_thread.join(timeout=2)
-        super().close()
+        """Ne pas fermer le handler - le worker doit rester vivant pour toujours"""
+        # Le worker est un daemon thread qui continuera à fonctionner
+        # même après appel de close(). On ne fait rien ici.
+        pass
 
 
 def setup_logger(
@@ -182,13 +190,24 @@ def setup_logger(
     user_id: Optional[str] = None,
     api_key: Optional[str] = None,
     log_level: str = "INFO",
-    grafana_url: str = "https://logs-prod-012.grafana.net"
+    grafana_url: str = "https://logs-prod-012.grafana.net",
+    file_path: str = "/var/log/alphallm.log"
 ) -> logging.Logger:
+    global _grafana_handler_instance
+    
     logger = logging.getLogger(name)
     logger.setLevel(getattr(logging, log_level))
     
-    if logger.handlers:
-        logger.handlers.clear()
+    # Supprimer UNIQUEMENT les anciens handlers du même type (pas Grafana!)
+    # pour éviter de fermer les connexions Grafana
+    handlers_to_remove = []
+    for handler in logger.handlers:
+        if not isinstance(handler, GrafanaLogsHandler):
+            handlers_to_remove.append(handler)
+    
+    for handler in handlers_to_remove:
+        logger.removeHandler(handler)
+        handler.close()
     
     # Handler console avec couleurs
     console_handler = logging.StreamHandler()
@@ -198,18 +217,41 @@ def setup_logger(
     )
     console_handler.setFormatter(colored_formatter)
     logger.addHandler(console_handler)
+    
+    # Handler fichier pour Fail2ban
+    try:
+        # Créer le répertoire s'il n'existe pas
+        log_dir = os.path.dirname(file_path)
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        
+        file_handler = logging.FileHandler(file_path)
+        file_formatter = logging.Formatter(
+            fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        file_handler.setFormatter(file_formatter)
+        logger.addHandler(file_handler)
+    except Exception as e:
+        print(f"⚠️  Impossible de créer le handler fichier {file_path}: {e}", file=sys.stderr)
 
-    # Handler Grafana Cloud
+    # Handler Grafana Cloud (instance globale unique)
     if user_id and api_key:
-        try:
-            grafana_handler = GrafanaLogsHandler(
-                user_id=user_id,
-                api_key=api_key,
-                grafana_url=grafana_url
-            )
-            logger.addHandler(grafana_handler)
-        except Exception as e:
-            print(f"⚠️  Impossible de configurer le handler Grafana: {e}", file=sys.stderr)
+        # Créer une seule instance et la réutiliser toujours
+        if _grafana_handler_instance is None:
+            try:
+                _grafana_handler_instance = GrafanaLogsHandler(
+                    user_id=user_id,
+                    api_key=api_key,
+                    grafana_url=grafana_url
+                )
+                logger.addHandler(_grafana_handler_instance)
+            except Exception as e:
+                print(f"⚠️  Impossible de configurer le handler Grafana: {e}", file=sys.stderr)
+        else:
+            # Ajouter l'instance existante si pas déjà présente
+            if _grafana_handler_instance not in logger.handlers:
+                logger.addHandler(_grafana_handler_instance)
 
     return logger
 
@@ -220,7 +262,8 @@ logger = setup_logger(
     user_id=config.grafana.user_id if config.logging.grafana else None,
     api_key=config.grafana.api_key if config.logging.grafana else None,
     log_level=config.logging.level,
-    grafana_url=config.grafana.url
+    grafana_url=config.grafana.url,
+    file_path="/var/log/alphallm.log"
 )
 
 __all__ = [
