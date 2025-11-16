@@ -3,7 +3,21 @@
     "name": "Flux",
     "author": "Black Forest Labs",
     "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/bfl.svg",
-    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/bfl.svg"
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/bfl.svg",
+    "sizes": [
+      "768x768",
+      "1024x1024",
+      "768x1024",
+      "1024x768",
+      "1792x1792",
+      "2048x2048",
+      "2048x1024",
+      "1024x2048",
+      "1792x1024",
+      "1024x1792",
+      "2048x1792",
+      "1792x2048"
+    ]
   },
   "sdxl": {
     "name": "SDXL",
@@ -13,9 +27,14 @@
     "sizes": [
       "768x768",
       "1024x1024",
-      "1024x1792",
-      "1792x1024",
+      "768x1024",
+      "1024x768",
+      "1792x1792",
       "2048x2048",
+      "2048x1024",
+      "1024x2048",
+      "1792x1024",
+      "1024x1792",
       "2048x1792",
       "1792x2048"
     ]
@@ -35,42 +54,128 @@
     "name": "GPT-Image",
     "author": "OpenAI",
     "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/openai.svg",
-    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/openai.svg"
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/openai.svg",
+    "sizes": [
+      "1024x1024",
+      "1024x1536",
+      "1536x1024"
+    ]
   },
   "imagen": {
     "name": "Imagen",
     "author": "Google",
     "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/deepmind-color.svg",
-    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/deepmind.svg"
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/deepmind.svg",
+    "sizes": [
+      "768x768",
+      "1024x1024",
+      "768x1024",
+      "1024x768",
+      "1792x1792",
+      "2048x2048",
+      "2048x1024",
+      "1024x2048",
+      "1792x1024",
+      "1024x1792",
+      "2048x1792",
+      "1792x2048"
+    ]
   },
   "kontext": {
     "name": "Kontext",
     "author": "Black Forest Labs",
     "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/bfl.svg",
-    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/bfl.svg"
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/bfl.svg",
+    "sizes": [
+      "768x768",
+      "1024x1024",
+      "768x1024",
+      "1024x768",
+      "1792x1792",
+      "2048x2048",
+      "2048x1024",
+      "1024x2048",
+      "1792x1024",
+      "1024x1792",
+      "2048x1792",
+      "1792x2048"
+    ]
   },
   "nanobanana": {
     "name": "Nanobanana",
     "author": "Google",
     "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/gemini-color.svg",
-    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/gemini.svg"
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/gemini.svg",
+    "sizes": [
+      "768x768",
+      "1024x1024",
+      "768x1024",
+      "1024x768",
+      "1792x1792",
+      "2048x2048",
+      "2048x1024",
+      "1024x2048",
+      "1792x1024",
+      "1024x1792",
+      "2048x1792",
+      "1792x2048"
+    ]
   },
   "seedream": {
     "name": "Seedream",
     "author": "ByteDance",
     "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/bytedance-color.svg",
-    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/bytedance.svg"
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/bytedance.svg",
+    "sizes": [
+      "1024x1024",
+      "1792x1792",
+      "2048x2048",
+      "2048x1024",
+      "1024x2048",
+      "1792x1024",
+      "1024x1792",
+      "2048x1792",
+      "1792x2048"
+    ]
   },
   "qwenimage": {
     "name": "Qwen-Image",
     "author": "Alibaba",
     "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/qwen-color.svg",
-    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/qwen.svg"
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/qwen.svg",
+    "sizes": [
+      "768x768",
+      "1024x1024",
+      "768x1024",
+      "1024x768",
+      "1792x1792",
+      "2048x2048",
+      "2048x1024",
+      "1024x2048",
+      "1792x1024",
+      "1024x1792",
+      "2048x1792",
+      "1792x2048"
+    ]
   },
   "grokimage": {
     "name": "Grok-Image",
     "author": "xAI",
     "icon-color": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/grok.svg",
-    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/grok.svg"
+    "icon-bw": "https://unpkg.com/@lobehub/icons-static-svg@1.73.0/icons/grok.svg",
+    "sizes": [
+      "768x768",
+      "1024x1024",
+      "768x1024",
+      "1024x768",
+      "1792x1792",
+      "2048x2048",
+      "2048x1024",
+      "1024x2048",
+      "1792x1024",
+      "1024x1792",
+      "2048x1792",
+      "1792x2048"
+    ]
   }
 }
