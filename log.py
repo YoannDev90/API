@@ -1,6 +1,6 @@
 """
 Configuration du logging pour AlphaLLM API
-Envoie les logs vers Grafana Cloud via l'API Loki
+Envoie les logs vers Grafana Cloud via l'API Loki (asynchrone)
 """
 
 
@@ -9,6 +9,8 @@ import json
 import sys
 import requests
 import time
+import threading
+import queue
 from datetime import datetime
 from typing import Optional
 from colorama import Fore, Style, init
@@ -48,6 +50,7 @@ class ColoredFormatter(logging.Formatter):
 class GrafanaLogsHandler(logging.Handler):
     """
     Handler personnalisé pour envoyer les logs à Grafana Cloud via l'API Loki
+    Utilise une queue asynchrone pour ne pas bloquer l'application
     """
     
     def __init__(
@@ -61,33 +64,55 @@ class GrafanaLogsHandler(logging.Handler):
         self.api_key = api_key
         self.endpoint = f"{grafana_url}/loki/api/v1/push"
         
-    def emit(self, record: logging.LogRecord):
+        # Queue pour les logs asynchrones
+        self.log_queue = queue.Queue(maxsize=100)
+        self.stop_event = threading.Event()
+        
+        # Thread worker pour envoyer les logs
+        self.worker_thread = threading.Thread(
+            target=self._worker, 
+            daemon=True,
+            name="GrafanaLogWorker"
+        )
+        self.worker_thread.start()
+        
+    def _worker(self):
+        """Worker thread qui envoie les logs à Grafana"""
+        while not self.stop_event.is_set():
+            try:
+                log_entry = self.log_queue.get(timeout=5)
+                if log_entry is None:  # Signal d'arrêt
+                    break
+                    
+                self._send_to_grafana(log_entry)
+                
+            except queue.Empty:
+                continue
+            except Exception as e:
+                print(f"⚠️  Erreur worker Grafana: {type(e).__name__}: {e}", file=sys.stderr)
+    
+    def _send_to_grafana(self, log_entry: dict):
+        """Envoie un log à Grafana (à appeler depuis le worker thread)"""
         try:
             # Vérifie les credentials
             if not self.user_id or not self.api_key:
                 return
 
-            # Format du log (sans couleurs pour Grafana)
-            formatter = logging.Formatter(
-                fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                datefmt='%Y-%m-%d %H:%M:%S'
-            )
-            log_entry = formatter.format(record)
-
             # Timestamp en nanosecondes pour Loki
-            timestamp = str(int(time.time() * 1000000000))
-            
+            timestamp = log_entry.get("timestamp")
+            log_text = log_entry.get("message")
+
             # Construction du payload pour Loki (format conforme à la spec)
             payload = {
                 "streams": [
                     {
                         "stream": {
                             "job": "alphallm-api",
-                            "level": record.levelname.lower(),
+                            "level": log_entry.get("level", "INFO").lower(),
                             "service": "alphallm-api"
                         },
                         "values": [
-                            [timestamp, log_entry]
+                            [timestamp, log_text]
                         ]
                     }
                 ]
@@ -103,19 +128,53 @@ class GrafanaLogsHandler(logging.Handler):
                 auth=(self.user_id, self.api_key),
                 json=payload,
                 headers=headers,
-                timeout=10
+                timeout=5  # Timeout réduit
             )
 
             # Vérification du statut de réponse
             if response.status_code not in (200, 201, 204):
-                print(f"⚠️  Erreur Grafana (HTTP {response.status_code}): {response.text}")
+                print(f"⚠️  Erreur Grafana (HTTP {response.status_code})", file=sys.stderr)
 
         except requests.exceptions.Timeout:
-            print("⚠️  Timeout lors de l'envoi à Grafana (10s)")
+            pass  # Silencieux - le worker ne doit pas bloquer
         except requests.exceptions.ConnectionError:
-            print("⚠️  Erreur de connexion à Grafana")
+            pass  # Silencieux
         except Exception as e:
-            print(f"⚠️  Erreur lors de l'envoi du log à Grafana: {type(e).__name__}: {e}")
+            pass  # Silencieux - ne pas bloquer le worker
+        
+    def emit(self, record: logging.LogRecord):
+        """Ajoute le log à la queue (non-bloquant)"""
+        try:
+            # Format du log (sans couleurs pour Grafana)
+            formatter = logging.Formatter(
+                fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+            log_entry_text = formatter.format(record)
+
+            # Timestamp en nanosecondes pour Loki
+            timestamp = str(int(time.time() * 1000000000))
+            
+            # Ajouter à la queue (avec timeout pour ne pas bloquer)
+            log_entry = {
+                "timestamp": timestamp,
+                "message": log_entry_text,
+                "level": record.levelname
+            }
+            
+            self.log_queue.put(log_entry, block=False)
+            
+        except queue.Full:
+            pass  # Queue pleine, ignorer ce log
+        except Exception:
+            pass  # Ne pas bloquer l'application
+    
+    def close(self):
+        """Fermer proprement le handler"""
+        self.stop_event.set()
+        self.log_queue.put(None)  # Signal d'arrêt
+        self.worker_thread.join(timeout=2)
+        super().close()
 
 
 def setup_logger(
