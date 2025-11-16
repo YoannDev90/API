@@ -90,6 +90,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         logger.info(f"Request: {request.method} {request.url.path} from {client_ip}")
         
         response = await call_next(request)
+        
+        # Log les erreurs 404 pour Fail2Ban
+        if response.status_code == 404:
+            logger.warning(f"Request: {request.method} {request.url.path} from {client_ip} - Response: 404 Not Found")
+        
         return response
 
 def create_app() -> FastAPI:

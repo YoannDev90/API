@@ -1,0 +1,12 @@
+# Jail pour bannir les IPs qui spamment des 404
+# Bannit après 3 erreurs 404 en 10 minutes
+
+[DEFAULT]
+bantime = 3600
+findtime = 600
+maxretry = 3
+
+[jail2]
+enabled = true
+filter = alphallm-404
+logpath = /var/log/alphallm.log
