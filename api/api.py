@@ -1,5 +1,5 @@
 from api.utils.app_config import create_app
-from api.endpoints import image_gen, main, text_gen, info, misc, image_edit
+from api.endpoints import image_gen, main, text_gen, info, misc, image_edit, jwt_test
 
 app = create_app()
 
@@ -9,3 +9,4 @@ app.include_router(image_gen.router)
 app.include_router(image_edit.router)
 app.include_router(misc.router)
 app.include_router(text_gen.router)
+app.include_router(jwt_test.router)
