@@ -34,7 +34,7 @@ az login
 
 # Variables
 RESOURCE_GROUP="AlphaLLM-RG"
-LOCATION="eastus"
+LOCATION="francecentral"  # 🇫🇷 Région: France (Paris)
 APP_NAME="alphallm-api"
 STORAGE_ACCOUNT="alphallmstorage"
 
@@ -107,6 +107,7 @@ az account show --query id -o tsv
 
 ```bash
 # Ajouter les variables d'environnement à la Function App
+# 🇫🇷 Région: francecentral (France - Paris)
 az functionapp config appsettings set \
   --name $APP_NAME \
   --resource-group $RESOURCE_GROUP \
@@ -114,10 +115,15 @@ az functionapp config appsettings set \
     DATA_SERVICE_BASE_URL="http://de5.azurhosts.com:25692/" \
     FUNCTIONS_WORKER_RUNTIME="python"
 
-# Vérifier
+# Vérifier la configuration
 az functionapp config appsettings list \
   --name $APP_NAME \
   --resource-group $RESOURCE_GROUP
+
+# ✅ Resources créées en francecentral:
+# - Function App: alphallm-api (Paris)
+# - Storage Account: alphallmstorage (Paris)
+# - Resource Group: AlphaLLM-RG (France)
 ```
 
 ---
@@ -396,7 +402,7 @@ az webapp log stream --name alphallm-api --resource-group AlphaLLM-RG
 }
 ```
 
-### Production (Azure Portal)
+### Production (Azure Portal - francecentral 🇫🇷)
 
 Function App → **Settings** → **Configuration** → **Application settings**
 
@@ -404,16 +410,21 @@ Function App → **Settings** → **Configuration** → **Application settings**
 |----------------------------|-----------------------------------|
 | `DATA_SERVICE_BASE_URL`    | `http://de5.azurhosts.com:25692/` |
 | `FUNCTIONS_WORKER_RUNTIME` | `python`                          |
+| `REGION`                   | `francecentral` (Paris)           |
 
 **Comment les ajouter:**
 
 ```bash
+# Ajouter une variable (exemple)
 az functionapp config appsettings set \
   --name alphallm-api \
   --resource-group AlphaLLM-RG \
   --settings \
-    DATA_SERVICE_BASE_URL="http://de5.azurhosts.com:25692/" \
     CUSTOM_VAR="ma_valeur"
+
+# Ressources en France:
+# Location: francecentral (Paris)
+# Région: Europe
 ```
 
 ---
@@ -585,7 +596,7 @@ POST-DÉPLOIEMENT:
 ## 🔟 Commandes Utiles
 
 ```bash
-# === CONFIGURATION AZURE ===
+# === CONFIGURATION AZURE (Région: francecentral 🇫🇷) ===
 
 # Lister les Function Apps
 az functionapp list --resource-group AlphaLLM-RG --output table
@@ -596,7 +607,7 @@ az functionapp config appsettings list --name alphallm-api --resource-group Alph
 # Redémarrer la Function App
 az functionapp restart --name alphallm-api --resource-group AlphaLLM-RG
 
-# Voir les logs en live
+# Voir les logs en live (streaming)
 az webapp log stream --name alphallm-api --resource-group AlphaLLM-RG
 
 # === DÉVELOPPEMENT LOCAL ===

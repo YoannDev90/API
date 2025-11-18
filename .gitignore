@@ -6,6 +6,7 @@ logs/
 .python_packages/
 .azure/
 *.jfm
+*.env
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
