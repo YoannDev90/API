@@ -1,8 +1,11 @@
 
 publish.sh
 logs/
-alphallm-api.service
-sudoers-alphallm
+
+# Azure Functions
+.python_packages/
+.azure/
+*.jfm
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -127,12 +130,17 @@ celerybeat.pid
 
 # Environments
 .env
+.env.local
+.env.*.local
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Azure Functions - local settings (contains secrets)
+local.settings.json
 
 # Spyder project settings
 .spyderproject
