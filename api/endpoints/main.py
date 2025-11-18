@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from datetime import datetime
 from logging import getLogger
 import requests
-from config import config
+from api.utils.azure_config import config
 import os
 from pathlib import Path
 

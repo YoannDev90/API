@@ -1,34 +1,47 @@
 """
-Configuration de l'application FastAPI pour AlphaLLM
-Optimisée pour Azure Functions
+Point d'entrée pour Azure Function App - AlphaLLM API
+Utilise Azure Functions Python v2 avec FastAPI via AsgiFunctionApp
 """
 
+import azure.functions as func
+import logging
+import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import Response, JSONResponse
-from logging import getLogger
+from starlette.responses import JSONResponse
 from collections import defaultdict
 from time import time
 import threading
 
-logger = getLogger("alphallm-api")
+# Importer les endpoints
+from api.endpoints import main, text_gen, image_gen, image_edit, info, misc, jwt_test
+
+# Configuration du logging
+logger = logging.getLogger("alphallm-api")
+logger.setLevel(logging.INFO)
+
+# Handler console (Azure Functions affichera les logs dans Application Insights)
+console_handler = logging.StreamHandler()
+formatter = logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
 
 
 class ClientIPMiddleware(BaseHTTPMiddleware):
     """Middleware pour récupérer l'IP réelle du client via Cloudflare"""
     
     async def dispatch(self, request: Request, call_next):
-        # Chercher l'IP réelle du client (Cloudflare utilise CF-Connecting-IP)
         client_ip = request.headers.get("CF-Connecting-IP") or \
                    request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or \
                    request.headers.get("X-Real-IP") or \
                    (request.client.host if request.client else "unknown")
         
-        # Ajouter l'IP réelle au contexte de la requête pour accès dans les endpoints
         request.scope["client_ip"] = client_ip
-        
         response = await call_next(request)
         return response
 
@@ -60,8 +73,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             request_count = len(self.request_history[client_ip])
             
             if request_count >= self.max_requests:
-                # Log de l'abus
-                logger.warning(f"Rate limit exceeded for IP {client_ip} on {request.url.path} - {request_count} requests in {self.time_window}s")
+                logger.warning(f"Rate limit exceeded for IP {client_ip} on {request.url.path}")
                 
                 return JSONResponse(
                     status_code=429,
@@ -73,21 +85,31 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     headers={"Retry-After": str(int(self.time_window))}
                 )
             
-            # Enregistrer cette requête
             self.request_history[client_ip].append(current_time)
         
-        # Log de la requête
         logger.info(f"Request: {request.method} {request.url.path} from {client_ip}")
         
         response = await call_next(request)
         
-        # Log les erreurs 404 pour Fail2Ban
         if response.status_code == 404:
             logger.warning(f"Request: {request.method} {request.url.path} from {client_ip} - Response: 404 Not Found")
         
         return response
 
+
+class CacheControlMiddleware(BaseHTTPMiddleware):
+    """Middleware pour ajouter les headers de contrôle de cache"""
+    
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
+
 def create_app() -> FastAPI:
+    """Crée l'application FastAPI avec les middlewares configurés"""
     app = FastAPI(
         title="AlphaLLM API",
         description="API pour le projet AlphaLLM",
@@ -97,10 +119,10 @@ def create_app() -> FastAPI:
         openapi_url="/openapi-schema"
     )
 
-    # Ajouter les middlewares dans le bon ordre (dernier ajouté = exécuté en premier)
-    # Ordre d'exécution: Rate limit → Client IP → Cache Control → CORS → TrustedHost
+    # Ajouter les middlewares dans le bon ordre
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(ClientIPMiddleware)
+    app.add_middleware(CacheControlMiddleware)
     
     app.add_middleware(
         TrustedHostMiddleware, 
@@ -115,4 +137,25 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
+    # Inclure les routers des endpoints
+    app.include_router(main.router)
+    app.include_router(info.router)
+    app.include_router(image_gen.router)
+    app.include_router(image_edit.router)
+    app.include_router(misc.router)
+    app.include_router(text_gen.router)
+    app.include_router(jwt_test.router)
+    
+    logger.info("Application démarrée avec succès")
+    
     return app
+
+
+# Créer l'application FastAPI
+fast_app = create_app()
+
+# Wrapper Azure Functions
+app = func.AsgiFunctionApp(
+    app=fast_app,
+    http_auth_level=func.AuthLevel.ANONYMOUS
+)

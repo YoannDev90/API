@@ -1,0 +1,37 @@
+# Azure Functions artifacts
+__pycache__/
+.python_packages/
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ignore local development files
+local.settings.json
+*.pyc
+.env
+
+# Legacy files (not needed for Azure Functions)
+config.py
+config.toml
+log.py
+main.py
+run.py
+requirements.txt.old
+publish.sh
+
+# Fail2ban config (handled by Azure security)
+fail2ban/
+
+# Systemd/Linux service files (not needed)
+alphallm-api.service
+sudoers-alphallm
+FAIL2BAN_SETUP.md
