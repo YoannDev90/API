@@ -282,36 +282,61 @@ print_header "STEP 6: Creating Service Principal for GitHub Actions"
 
 SERVICE_PRINCIPAL_NAME="github-actions-${APP_NAME}"
 
-# Check if service principal already exists
-if az ad sp list --display-name "$SERVICE_PRINCIPAL_NAME" --query "[0].id" -o tsv &> /dev/null; then
-    EXISTING_SP=$(az ad sp list --display-name "$SERVICE_PRINCIPAL_NAME" --query "[0].id" -o tsv)
-    if [ ! -z "$EXISTING_SP" ]; then
-        print_warning "Service Principal '$SERVICE_PRINCIPAL_NAME' already exists"
-        SERVICE_PRINCIPAL_ID=$EXISTING_SP
-    fi
+# Create app registration
+print_info "Creating app registration: $SERVICE_PRINCIPAL_NAME"
+APP_REG=$(az ad app create --display-name "$SERVICE_PRINCIPAL_NAME" --query appId -o tsv 2>/dev/null || echo "")
+
+if [ -z "$APP_REG" ]; then
+    # Try to get existing
+    APP_REG=$(az ad app list --display-name "$SERVICE_PRINCIPAL_NAME" --query "[0].appId" -o tsv 2>/dev/null || echo "")
 fi
 
-if [ -z "$SERVICE_PRINCIPAL_ID" ]; then
-    print_info "Creating new service principal: $SERVICE_PRINCIPAL_NAME"
-    SP_OUTPUT=$(az ad sp create-for-rbac \
-        --name "$SERVICE_PRINCIPAL_NAME" \
-        --role "Contributor" \
-        --scopes "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP" \
-        --json-auth)
-    
-    print_success "Service Principal created"
-else
-    print_info "Using existing service principal"
+if [ -z "$APP_REG" ]; then
+    print_error "Could not create or find app registration"
+    exit 1
 fi
 
-# Extract credentials from service principal
-CLIENT_ID=$(echo "$SP_OUTPUT" | jq -r '.clientId')
-CLIENT_SECRET=$(echo "$SP_OUTPUT" | jq -r '.clientSecret')
+print_success "App registration created: $APP_REG"
 
-print_success "Service Principal credentials:"
-print_info "CLIENT_ID: $CLIENT_ID"
-print_info "TENANT_ID: $TENANT_ID"
-print_warning "CLIENT_SECRET: (hidden for security)"
+# Create service principal from app registration
+SP_ID=$(az ad sp create --id "$APP_REG" --query id -o tsv 2>/dev/null || echo "")
+
+if [ -z "$SP_ID" ]; then
+    # Try to get existing
+    SP_ID=$(az ad sp list --display-name "$SERVICE_PRINCIPAL_NAME" --query "[0].id" -o tsv 2>/dev/null || echo "")
+fi
+
+if [ -z "$SP_ID" ]; then
+    print_error "Could not create or find service principal"
+    exit 1
+fi
+
+print_success "Service principal created: $SP_ID"
+
+# Assign Contributor role to the service principal
+print_info "Assigning Contributor role to service principal..."
+az role assignment create \
+    --assignee "$SP_ID" \
+    --role "Contributor" \
+    --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP" 2>/dev/null || {
+    print_warning "Role assignment might already exist"
+}
+
+print_success "Contributor role assigned"
+
+# Create client secret
+print_info "Creating client secret (valid for 1 year)..."
+CLIENT_SECRET=$(az ad app credential create \
+    --id "$APP_REG" \
+    --display-name "github-actions-secret" \
+    --query password -o tsv)
+
+if [ -z "$CLIENT_SECRET" ]; then
+    print_error "Could not create client secret"
+    exit 1
+fi
+
+print_success "Client secret created"
 
 # ============================================================================
 # 7. DISPLAY GITHUB SECRETS
