@@ -16,7 +16,7 @@ from time import time
 import threading
 
 # Importer les endpoints
-from api.endpoints import main, text_gen, image_gen, image_edit, info, misc, jwt_test
+from api.endpoints import main, text_gen, image_gen, image_edit, info, misc
 
 # Configuration du logging
 logger = logging.getLogger("alphallm-api")
@@ -144,7 +144,6 @@ def create_app() -> FastAPI:
     app.include_router(image_edit.router)
     app.include_router(misc.router)
     app.include_router(text_gen.router)
-    app.include_router(jwt_test.router)
     
     logger.info("Application démarrée avec succès")
     
