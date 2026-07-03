@@ -34,6 +34,13 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## Tests
+
+```bash
+pip install pytest
+python -m pytest tests/ -v
+```
+
 ## Keep-alive
 
 Set `RENDER_EXTERNAL_URL` env var. Server pings `/health` every 10 min to prevent Render free tier sleep.
