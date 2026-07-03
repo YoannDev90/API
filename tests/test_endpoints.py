@@ -82,7 +82,14 @@ class TestRoutes:
                    "/is-prime", "/factors", "/divisors", "/math/sequence", "/math/trig", "/math/round", "/math/combinations",
                    "/date/now", "/date/add", "/date/range", "/date/weekday", "/date/iso", "/date/easter", "/date/solstice", "/holidays",
                    "/url/info", "/url/compare", "/webhook/test", "/gzip", "/hsts", "/csp-analyze", "/headers/security", "/user-agents/random",
-                   "/format/csv", "/format/markdown-table", "/json/patch", "/json/schema", "/pretty-xml"]:
+                   "/format/csv", "/format/markdown-table", "/json/patch", "/json/schema", "/pretty-xml",
+                   "/dns/batch", "/dns/all", "/dns/soa", "/dns/ns", "/dns/caa", "/dns/srv", "/dns/ptr", "/dns/dnssec", "/dns/propagation", "/dns/resolve",
+                   "/net/ipv6", "/net/http2", "/net/http3", "/net/methods", "/net/latency", "/net/banner", "/net/trace",
+                   "/page/opengraph", "/page/schema", "/page/feeds", "/page/favicon", "/page/size", "/page/links", "/page/images",
+                   "/sec/blacklist", "/sec/email-auth", "/sec/tls-versions", "/sec/cors", "/sec/cache", "/sec/cookie",
+                   "/net/subnet", "/net/ip-range", "/net/ip-info", "/net/random-ip", "/net/common-ports", "/net/rir", "/net/reverse-proxy", "/net/cloud",
+                   "/net/cert-chain", "/net/ocsp", "/net/quic", "/net/http-compress", "/net/anycast", "/net/asn", "/net/port",
+                   "/page/scripts", "/page/stylesheets", "/net/mtr", "/dns/zone-transfer", "/page/language", "/net/dns-resolve6", "/sec/sri"]:
             assert p in paths
 
     def test_sorted(self):
@@ -613,6 +620,67 @@ class TestAllModules:
         from app import app
         assert len(app.routes) >= 80
 
+
+class TestBatch8_NetDNS:
+    def test_batch(self): assert client.get("/dns/batch?domain=example.com&types=A,MX").status_code in (200, 502)
+    def test_all(self): assert client.get("/dns/all?domain=example.com").status_code in (200, 502)
+    def test_soa(self): assert client.get("/dns/soa?domain=example.com").status_code in (200, 502)
+    def test_ns(self): assert client.get("/dns/ns?domain=example.com").status_code in (200, 502)
+    def test_caa(self): assert client.get("/dns/caa?domain=example.com").status_code in (200, 502)
+    def test_srv(self): assert client.get("/dns/srv?service=_sip._tcp.example.com").status_code in (200, 502)
+    def test_ptr(self): assert client.get("/dns/ptr?ip=8.8.8.8").status_code in (200, 502)
+    def test_dnssec(self): assert client.get("/dns/dnssec?domain=example.com").status_code in (200, 502)
+    def test_prop(self): assert client.get("/dns/propagation?domain=example.com").status_code in (200, 502)
+    def test_resolve(self): assert client.get("/dns/resolve?domain=example.com&resolver=1.1.1.1&type=A").status_code in (200, 502)
+    def test_zone_transfer(self): assert client.get("/dns/zone-transfer?domain=example.com").status_code in (200, 502)
+
+class TestBatch9_NetScan:
+    def test_ipv6(self): assert client.get("/net/ipv6?domain=example.com").status_code in (200, 502)
+    def test_http2(self): assert client.get("/net/http2?url=https://example.com").status_code in (200, 502)
+    def test_http3(self): assert client.get("/net/http3?url=https://example.com").status_code in (200, 502)
+    def test_methods(self): assert client.get("/net/methods?url=https://example.com").status_code in (200, 502)
+    def test_latency(self): assert client.get("/net/latency?host=8.8.8.8").status_code in (200, 502)
+    def test_banner(self): assert client.get("/net/banner?host=example.com&port=80").status_code in (200, 502)
+    def test_trace(self): assert client.get("/net/trace?url=https://example.com").status_code in (200, 502)
+    def test_port(self): assert client.get("/net/port?host=example.com&port=80").status_code in (200, 502)
+    def test_common_ports(self): assert client.get("/net/common-ports?host=example.com").status_code in (200, 502)
+
+class TestBatch10_Page:
+    def test_opengraph(self): assert client.get("/page/opengraph?url=https://example.com").status_code in (200, 502)
+    def test_schema(self): assert client.get("/page/schema?url=https://example.com").status_code in (200, 502)
+    def test_feeds(self): assert client.get("/page/feeds?url=https://example.com").status_code in (200, 502)
+    def test_favicon(self): assert client.get("/page/favicon?url=https://example.com").status_code in (200, 502)
+    def test_size(self): assert client.get("/page/size?url=https://example.com").status_code in (200, 502)
+    def test_links(self): assert client.get("/page/links?url=https://example.com").status_code in (200, 502)
+    def test_images(self): assert client.get("/page/images?url=https://example.com").status_code in (200, 502)
+    def test_scripts(self): assert client.get("/page/scripts?url=https://example.com").status_code in (200, 502)
+    def test_stylesheets(self): assert client.get("/page/stylesheets?url=https://example.com").status_code in (200, 502)
+    def test_language(self): assert client.get("/page/language?url=https://example.com").status_code in (200, 502)
+
+class TestBatch11_Security:
+    def test_blacklist(self): assert client.get("/sec/blacklist?ip=8.8.8.8").status_code in (200, 502)
+    def test_email_auth(self): assert client.get("/sec/email-auth?domain=example.com").status_code in (200, 502)
+    def test_tls_versions(self): assert client.get("/sec/tls-versions?domain=example.com").status_code in (200, 502)
+    def test_cors(self): assert client.get("/sec/cors?url=https://example.com").status_code in (200, 502)
+    def test_cache(self): assert client.get("/sec/cache?url=https://example.com").status_code in (200, 502)
+    def test_cookie(self): assert client.get("/sec/cookie?url=https://example.com").status_code in (200, 502)
+    def test_sri(self): assert client.get("/sec/sri?url=https://example.com").status_code in (200, 502)
+
+class TestBatch12_NetUtil:
+    def test_subnet(self): assert client.get("/net/subnet?cidr=10.0.0.0/24").status_code == 200
+    def test_ip_range(self): assert client.get("/net/ip-range?start=10.0.0.0&end=10.0.0.5").status_code == 200
+    def test_ip_info(self): assert client.get("/net/ip-info?ip=8.8.8.8").status_code == 200
+    def test_random_ip(self): assert client.get("/net/random-ip?count=3").status_code == 200
+    def test_rir(self): assert client.get("/net/rir?ip=8.8.8.8").status_code in (200, 502)
+    def test_reverse_proxy(self): assert client.get("/net/reverse-proxy?url=https://example.com").status_code in (200, 502)
+    def test_cloud(self): assert client.get("/net/cloud?domain=example.com").status_code in (200, 502)
+    def test_cert_chain(self): assert client.get("/net/cert-chain?domain=example.com").status_code in (200, 501, 502)
+    def test_ocsp(self): assert client.get("/net/ocsp?domain=example.com").status_code in (200, 502)
+    def test_quic(self): assert client.get("/net/quic?url=https://example.com").status_code in (200, 502)
+    def test_compress(self): assert client.get("/net/http-compress?url=https://example.com").status_code in (200, 502)
+    def test_anycast(self): assert client.get("/net/anycast?ip=1.1.1.1").status_code == 200
+    def test_asn(self): assert client.get("/net/asn?ip_or_asn=15169").status_code in (200, 502)
+    def test_mtr(self): assert client.get("/net/mtr?host=example.com").status_code == 200
 
 class TestBatch1_DNS:
     def test_mx(self): assert client.get("/mx-lookup?domain=example.com").status_code in (200, 502)
