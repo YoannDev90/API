@@ -6,13 +6,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from time import time
 
-import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from config import config, allowed_proxy_paths
 from keep_alive import start_self_ping
 from __init__ import __version__
 
@@ -28,7 +26,7 @@ def load_endpoints(app: FastAPI):
     files = sorted(
         f
         for f in endpoints_dir.glob("*.py")
-        if f.name not in ("__init__.py", "api_catchall.py")
+        if f.name != "__init__.py"
     )
     for file in files:
         module_name = f"endpoints.{file.stem}"
@@ -40,39 +38,9 @@ def load_endpoints(app: FastAPI):
         except Exception as e:
             logger.error(f"Failed to load {module_name}: {e}")
 
-    try:
-        module = importlib.import_module("endpoints.api_catchall")
-        if hasattr(module, "router"):
-            app.include_router(module.router)
-            logger.info("Loaded: endpoints.api_catchall")
-    except Exception as e:
-        logger.error(f"Failed to load endpoints.api_catchall: {e}")
-
-
-async def load_allowed_paths(app: FastAPI):
-    logger.info("Loading allowed paths from upstream...")
-    try:
-        schema_url = f"{config.base_url.rstrip('/')}/openapi.json"
-        async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get(schema_url)
-        if resp.status_code == 200:
-            schema = resp.json()
-            paths = schema.get("paths", {})
-            app.origin_schema = schema
-            for path in paths:
-                normalized = path.split("{")[0].rstrip("/")
-                if normalized and normalized not in ("", "/", "/status", "/resources"):
-                    allowed_proxy_paths.add(normalized)
-            logger.info(f"Allowed paths: {sorted(allowed_proxy_paths)}")
-        else:
-            logger.warning(f"OpenAPI schema load failed: {resp.status_code}")
-    except Exception as e:
-        logger.error(f"OpenAPI schema error: {e}")
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await load_allowed_paths(app)
     ping_task = await start_self_ping()
     app.startup_time = time()
     app.openapi_schema = None

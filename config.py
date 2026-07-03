@@ -7,6 +7,5 @@ class Config(BaseSettings):
 
 
 config = Config()
-allowed_proxy_paths: set[str] = set()
 
-__all__ = ["config", "allowed_proxy_paths"]
+__all__ = ["config"]

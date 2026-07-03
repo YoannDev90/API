@@ -24,7 +24,7 @@ Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for R
 │   ├── favicon.py           # GET /favicon.ico
 │   ├── list_routes.py       # GET /routes
 │   ├── proxy_global.py      # GET /proxy (UI) + /proxy/{path:path} (proxy)
-│   └── api_catchall.py      # /api/{path:path} (catch-all, loaded last)
+│   └── utils.py             # GET /whois, /uuid, POST /base64/*
 └── requirements.txt
 ```
 
