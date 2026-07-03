@@ -27,7 +27,7 @@ Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for R
 │   └── test_endpoints.py
 ├── .github/
 │   └── workflows/ci.yml
-└── endpoints/   (78 files, auto-discovered)
+└── endpoints/   (131 files, auto-discovered)
 ```
 
 ## Quick start
