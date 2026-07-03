@@ -75,7 +75,14 @@ class TestRoutes:
         d = resp.json()
         assert d["count"] > 0
         paths = [r["path"] for r in d["routes"]]
-        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents", "/hash", "/password", "/timestamp", "/dns", "/qr", "/markdown", "/color", "/text-stats", "/cron", "/jwt/decode", "/phone", "/country", "/regex/test", "/ssl", "/ports", "/http-status", "/password-strength", "/user-agent", "/json/format", "/random/number", "/roman", "/slugify", "/morse", "/dice", "/coin", "/date/diff", "/date/age", "/leap", "/bmi", "/convert", "/csp", "/week", "/headers", "/redirects", "/cookies", "/robots", "/stats", "/prime", "/fibonacci", "/factorial", "/gcd", "/text/sort", "/text/dedup", "/text/columns", "/rdap", "/asn", "/color/random", "/color/palette", "/unicode", "/split", "/join"]:
+        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents", "/hash", "/password", "/timestamp", "/dns", "/qr", "/markdown", "/color", "/text-stats", "/cron", "/jwt/decode", "/phone", "/country", "/regex/test", "/ssl", "/ports", "/http-status", "/password-strength", "/user-agent", "/json/format", "/random/number", "/roman", "/slugify", "/morse", "/dice", "/coin", "/date/diff", "/date/age", "/leap", "/bmi", "/convert", "/csp", "/week", "/headers", "/redirects", "/cookies", "/robots", "/stats", "/prime", "/fibonacci", "/factorial", "/gcd", "/text/sort", "/text/dedup", "/text/columns", "/rdap", "/asn", "/color/random", "/color/palette", "/unicode", "/split", "/join",
+                   "/mx-lookup", "/spf", "/dmarc", "/dkim", "/reverse-dns", "/ping", "/tls", "/cdn-detect",
+                   "/text/extract", "/text/shuffle", "/text/strip", "/text/wrap", "/text/number-lines", "/text/checksum", "/text/truncate", "/text/find-replace", "/text/censor", "/text/palindrome",
+                   "/encode/hex", "/encode/binary", "/encode/rot13", "/encode/rot47", "/encode/ascii85", "/encode/quoted-printable", "/encode/punycode",
+                   "/is-prime", "/factors", "/divisors", "/math/sequence", "/math/trig", "/math/round", "/math/combinations",
+                   "/date/now", "/date/add", "/date/range", "/date/weekday", "/date/iso", "/date/easter", "/date/solstice", "/holidays",
+                   "/url/info", "/url/compare", "/webhook/test", "/gzip", "/hsts", "/csp-analyze", "/headers/security", "/user-agents/random",
+                   "/format/csv", "/format/markdown-table", "/json/patch", "/json/schema", "/pretty-xml"]:
             assert p in paths
 
     def test_sorted(self):
@@ -605,6 +612,73 @@ class TestAllModules:
     def test_routes_count(self):
         from app import app
         assert len(app.routes) >= 80
+
+
+class TestBatch1_DNS:
+    def test_mx(self): assert client.get("/mx-lookup?domain=example.com").status_code in (200, 502)
+    def test_spf(self): assert client.get("/spf?domain=example.com").status_code in (200, 502)
+    def test_dmarc(self): assert client.get("/dmarc?domain=example.com").status_code in (200, 502)
+    def test_dkim(self): assert client.get("/dkim?domain=example.com").status_code in (200, 502)
+    def test_reverse_dns(self): assert client.get("/reverse-dns?ip=8.8.8.8").status_code in (200, 502)
+    def test_ping(self): assert client.get("/ping?host=example.com&port=80").status_code in (200, 502)
+    def test_tls(self): assert client.get("/tls?domain=example.com").status_code in (200, 502)
+    def test_cdn(self): assert client.get("/cdn-detect?url=https://example.com").status_code in (200, 502)
+
+class TestBatch2_Text:
+    def test_extract(self): assert client.post("/text/extract", json={"text": "test@test.com"}).status_code == 200
+    def test_shuffle(self): assert client.post("/text/shuffle", json={"text": "a\nb\nc"}).status_code == 200
+    def test_strip(self): assert client.post("/text/strip", json={"text": "  hello  "}).status_code == 200
+    def test_wrap(self): assert client.post("/text/wrap", json={"text": "hello world" , "width": 20}).status_code == 200
+    def test_number_lines(self): assert client.post("/text/number-lines", json={"text": "a\nb"}).status_code == 200
+    def test_checksum(self): assert client.post("/text/checksum", json={"text": "hello"}).status_code == 200
+    def test_truncate(self): assert client.post("/text/truncate", json={"text": "hello world"}).status_code == 200
+    def test_find_replace(self): assert client.post("/text/find-replace", json={"text": "hello", "find": "l", "replace": "x"}).status_code == 200
+    def test_censor(self): assert client.post("/text/censor", json={"text": "bad word"}, params={"words": "bad"}).status_code == 200
+    def test_palindrome(self): assert client.post("/text/palindrome", json={"text": "racecar"}).json()["is_palindrome"] is True
+
+class TestBatch3_Encode:
+    def test_hex(self): assert client.post("/encode/hex", json={"text": "hello"}).status_code == 200
+    def test_binary(self): assert client.post("/encode/binary", json={"text": "A"}).status_code == 200
+    def test_rot13(self): assert client.post("/encode/rot13", json={"text": "hello"}).status_code == 200
+    def test_rot47(self): assert client.post("/encode/rot47", json={"text": "hello"}).status_code == 200
+    def test_ascii85(self): assert client.post("/encode/ascii85", json={"text": "hello"}).status_code == 200
+    def test_qp(self): assert client.post("/encode/quoted-printable", json={"text": "hello"}).status_code == 200
+    def test_punycode(self): assert client.post("/encode/punycode", json={"text": "münchen"}).status_code == 200
+
+class TestBatch4_Math:
+    def test_is_prime(self): assert client.get("/is-prime?n=17").json()["prime"] is True
+    def test_factors(self): assert client.get("/factors?n=12").json()["factors"] == [2, 2, 3]
+    def test_divisors(self): assert client.get("/divisors?n=12").json()["count"] == 6
+    def test_sequence(self): assert client.get("/math/sequence?first=2&diff=3&count=5").status_code == 200
+    def test_trig(self): assert client.get("/math/trig?angle=45&func=sin").status_code == 200
+    def test_round(self): assert client.get("/math/round?value=3.14159&decimals=2").json()["rounded"] == 3.14
+    def test_combinations(self): assert client.get("/math/combinations?n=5&k=2").json()["combinations"] == 10
+
+class TestBatch5_Date:
+    def test_now(self): assert client.get("/date/now").status_code == 200
+    def test_add(self): assert client.get("/date/add?date=2024-01-01&days=10").status_code == 200
+    def test_range(self): assert client.get("/date/range?start=2024-01-01&end=2024-01-05").status_code == 200
+    def test_weekday(self): assert client.get("/date/weekday?date=2024-01-01").json()["weekday"] == 0
+    def test_iso(self): assert client.get("/date/iso?value=2024-01-01T12:00:00").status_code == 200
+    def test_easter(self): assert client.get("/date/easter?year=2024").status_code == 200
+    def test_solstice(self): assert client.get("/date/solstice?year=2024").status_code == 200
+    def test_holidays(self): assert client.get("/holidays?year=2024&country=US").status_code in (200, 502)
+
+class TestBatch6_Web:
+    def test_url_info(self): assert client.get("/url/info?url=https://example.com/path").status_code == 200
+    def test_url_compare(self): assert client.get("/url/compare?a=https://example.com&b=https://EXAMPLE.com").json()["equal"] is True
+    def test_gzip(self): assert client.get("/gzip?url=https://example.com").status_code in (200, 502)
+    def test_hsts(self): assert client.get("/hsts?domain=example.com").status_code in (200, 502)
+    def test_csp_analyze(self): assert client.get("/csp-analyze?url=https://example.com").status_code in (200, 502)
+    def test_security_headers(self): assert client.get("/headers/security?url=https://example.com").status_code in (200, 502)
+    def test_ua_random(self): assert client.get("/user-agents/random").status_code == 200
+
+class TestBatch7_Format:
+    def test_csv(self): assert client.post("/format/csv", json={"text": "a b c\nd e f"}).status_code == 200
+    def test_md_table(self): assert client.post("/format/markdown-table", json={"data": "a,b,c\nd,e,f"}).status_code == 200
+    def test_json_patch(self): assert client.post("/json/patch", json={"document": {"x": 1}, "patch": [{"op": "replace", "path": "/x", "value": 2}]}).json()["result"]["x"] == 2
+    def test_json_schema(self): assert client.post("/json/schema", json={"data": '{"name": "test"}'}).status_code == 200
+    def test_pretty_xml(self): assert client.get("/pretty-xml?url=https://example.com").status_code in (200, 502)
 
 
 class TestMiddleware:

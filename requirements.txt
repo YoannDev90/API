@@ -19,6 +19,7 @@ zxcvbn
 user-agents
 bcrypt
 pyyaml
+holidays
 
 # dev
 pytest
