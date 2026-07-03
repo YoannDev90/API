@@ -30,10 +30,20 @@ async def proxy_request(request, path: str = "", target_url: str = None):
                 content=body,
                 follow_redirects=False,
             )
+            proxied_headers = {
+                k: v
+                for k, v in resp.headers.items()
+                if k.lower()
+                not in (
+                    "x-frame-options",
+                    "content-security-policy",
+                    "frame-options",
+                )
+            }
             return Response(
                 content=resp.content,
                 status_code=resp.status_code,
-                headers=dict(resp.headers),
+                headers=proxied_headers,
                 media_type=resp.headers.get("content-type"),
             )
     except httpx.TimeoutException:
