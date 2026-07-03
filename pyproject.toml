@@ -1,0 +1,20 @@
+[project]
+name = "api-proxy"
+version = "2.0.0"
+description = "Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for Render"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "httpx",
+    "uvicorn[standard]",
+    "pydantic",
+    "pydantic-settings",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.uv]
+dev-dependencies = ["pytest"]

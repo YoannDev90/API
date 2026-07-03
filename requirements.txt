@@ -1,7 +1,9 @@
+# main deps (see pyproject.toml for source of truth)
 fastapi
 httpx
 uvicorn[standard]
 pydantic
+pydantic-settings
 
 # dev
 pytest
