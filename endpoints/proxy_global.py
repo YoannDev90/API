@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded",function(){
     var u=url.value.trim();
     if(!u)return;
     if(!u.startsWith("http://")&&!u.startsWith("https://"))u="https://"+u;
-    var ua=uaSelect.value?"&ua="+encodeURIComponent(uaSelect.value):"";
+    var ua=uaSelect.value?"?ua="+encodeURIComponent(uaSelect.value):"";
     var p="/proxy/"+encodeURIComponent(u)+ua;
     btn.textContent="...";
     if(debugMode){
