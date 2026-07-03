@@ -10,7 +10,8 @@ async def favicon():
     path = Path("favicon.ico")
     if path.exists():
         return FileResponse(
-            path, media_type="image/x-icon",
-            headers={"Cache-Control": "public, max-age=86400"}
+            path,
+            media_type="image/x-icon",
+            headers={"Cache-Control": "public, max-age=86400"},
         )
     return {"code": "404"}

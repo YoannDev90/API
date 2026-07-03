@@ -27,13 +27,19 @@ async def resources_proxy(request: Request):
 
     try:
         stream_cm = client.stream(
-            method=request.method, url=target_url,
-            headers=headers, content=body, follow_redirects=False,
+            method=request.method,
+            url=target_url,
+            headers=headers,
+            content=body,
+            follow_redirects=False,
         )
         response = await stream_cm.__aenter__()
 
         if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail=f"Origin error: {response.status_code}")
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=f"Origin error: {response.status_code}",
+            )
 
         async def generate():
             try:

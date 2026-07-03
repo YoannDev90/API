@@ -23,7 +23,10 @@ class ProxyRequest(BaseModel):
 
 @router.post("/proxy", tags=["proxy"])
 async def custom_proxy(proxy_req: ProxyRequest, request: Request):
-    client_ip = request.scope.get("client_ip", request.client.host if request.client else "unknown")
+    client_ip = request.scope.get(
+        "client_ip", request.client.host if request.client else "unknown"
+    )
+    logger.info(f"Custom proxy: {proxy_req.method} {proxy_req.url} from {client_ip}")
 
     if not proxy_req.url.startswith(("http://", "https://")):
         return Response("URL must start with http:// or https://", status_code=400)
@@ -34,13 +37,18 @@ async def custom_proxy(proxy_req: ProxyRequest, request: Request):
         try:
             ip = ipaddress.ip_address(hostname)
             if ip.is_private or ip.is_loopback:
-                return Response("Access to private/local IPs not allowed", status_code=403)
+                return Response(
+                    "Access to private/local IPs not allowed", status_code=403
+                )
         except ValueError:
             try:
                 resolved = socket.gethostbyname(hostname)
                 ip = ipaddress.ip_address(resolved)
                 if ip.is_private or ip.is_loopback:
-                    raise HTTPException(status_code=403, detail="Access to private/local IPs not allowed")
+                    raise HTTPException(
+                        status_code=403,
+                        detail="Access to private/local IPs not allowed",
+                    )
             except socket.gaierror:
                 pass
     except Exception:

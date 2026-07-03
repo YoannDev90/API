@@ -1,4 +1,5 @@
 """Self-ping to prevent Render from sleeping"""
+
 import asyncio
 import logging
 import os

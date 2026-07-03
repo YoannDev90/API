@@ -10,11 +10,16 @@ router = APIRouter()
 logger = getLogger("api")
 
 
-@router.api_route("/proxy/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"], tags=["global-proxy"])
+@router.api_route(
+    "/proxy/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+    tags=["global-proxy"],
+)
 async def catch_all_proxy(request: Request, path: str):
-    client_ip = request.scope.get("client_ip", request.client.host if request.client else "unknown")
+    client_ip = request.scope.get(
+        "client_ip", request.client.host if request.client else "unknown"
+    )
 
-    # Decode target URL: base64 url-safe, base64 standard, url-encoded, or raw
     target_url = None
     for decoder in [
         lambda p: base64.urlsafe_b64decode(p).decode(),
@@ -33,7 +38,6 @@ async def catch_all_proxy(request: Request, path: str):
     if not target_url:
         raise HTTPException(status_code=400, detail="Invalid encoded URL")
 
-    # Block internal URLs
     blocked = ["localhost", "127.0.0.1", "0.0.0.0"]
     if any(b in target_url for b in blocked):
         raise HTTPException(status_code=403, detail="Forbidden")

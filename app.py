@@ -25,7 +25,12 @@ def load_endpoints(app: FastAPI):
         logger.warning("endpoints/ directory not found")
         return
 
-    for file in sorted(endpoints_dir.glob("[0-9]*.py")):
+    files = sorted(
+        f
+        for f in endpoints_dir.glob("*.py")
+        if f.name not in ("__init__.py", "api_catchall.py")
+    )
+    for file in files:
         module_name = f"endpoints.{file.stem}"
         try:
             module = importlib.import_module(module_name)
@@ -34,6 +39,15 @@ def load_endpoints(app: FastAPI):
                 logger.info(f"Loaded: {module_name}")
         except Exception as e:
             logger.error(f"Failed to load {module_name}: {e}")
+
+    # Load catch-all last so specific routes match first
+    try:
+        module = importlib.import_module("endpoints.api_catchall")
+        if hasattr(module, "router"):
+            app.include_router(module.router)
+            logger.info("Loaded: endpoints.api_catchall")
+    except Exception as e:
+        logger.error(f"Failed to load endpoints.api_catchall: {e}")
 
 
 async def load_allowed_paths(app: FastAPI):
@@ -91,7 +105,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return (1, 1.0) if path == "/resources" else (5, 1.0)
 
     async def dispatch(self, request, call_next):
-        client_ip = request.scope.get("client_ip", request.client.host if request.client else "unknown")
+        client_ip = request.scope.get(
+            "client_ip", request.client.host if request.client else "unknown"
+        )
         path = request.url.path
         max_req, window = self._limits(path)
         key = f"{client_ip}:{path}"
@@ -102,7 +118,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             if len(self.history[key]) >= max_req:
                 return JSONResponse(
                     status_code=429,
-                    content={"code": "429", "message": f"Rate limit exceeded ({max_req} req/s)"},
+                    content={
+                        "code": "429",
+                        "message": f"Rate limit exceeded ({max_req} req/s)",
+                    },
                     headers={"Retry-After": str(int(window))},
                 )
             self.history[key].append(time())

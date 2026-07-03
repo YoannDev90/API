@@ -11,17 +11,21 @@ Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for R
 ├── proxy.py            # Proxy logic (internal + general)
 ├── keep_alive.py       # Self-ping to prevent Render sleep
 ├── endpoints/          # One file per endpoint, loaded dynamically
-│   ├── 01_root.py
-│   ├── 02_health.py
-│   ├── 03_uptime.py
-│   ├── 04_debug.py
-│   ├── 05_favicon.py
-│   ├── 06_proxy_custom.py
-│   ├── 07_proxy_global.py
-│   ├── 08_api_status.py
-│   ├── 09_api_docs.py
-│   ├── 10_api_resources.py
-│   └── 99_api_catchall.py
+│   ├── root.py              # GET /
+│   ├── health.py            # GET /health
+│   ├── ping.py              # GET /ping
+│   ├── uptime.py            # GET /uptime
+│   ├── version.py           # GET /version
+│   ├── client_ip.py         # GET /ip
+│   ├── debug.py             # GET /debug
+│   ├── favicon.py           # GET /favicon.ico
+│   ├── list_routes.py       # GET /routes
+│   ├── proxy_custom.py      # POST /proxy
+│   ├── proxy_global.py      # /proxy/{path:path}
+│   ├── api_status.py        # GET /api/status
+│   ├── api_docs.py          # GET /api/docs
+│   ├── api_resources.py     # GET /api/resources (SSE)
+│   └── api_catchall.py      # /api/{path:path} (catch-all, loaded last)
 └── requirements.txt
 ```
 
