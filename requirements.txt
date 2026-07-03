@@ -5,6 +5,7 @@ uvicorn[standard]
 pydantic
 pydantic-settings
 python-whois
+deep-translator
 
 # dev
 pytest

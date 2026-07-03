@@ -24,7 +24,8 @@ Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for R
 │   ├── favicon.py           # GET /favicon.ico
 │   ├── list_routes.py       # GET /routes
 │   ├── proxy_global.py      # GET /proxy (UI) + /proxy/{path:path} (proxy)
-│   └── utils.py             # GET /whois, /uuid, POST /base64/*
+│   ├── render_info.py       # GET /render
+│   └── utils.py             # GET /whois, /uuid, POST /base64/*, POST /translate, GET /screenshot
 └── requirements.txt
 ```
 
@@ -62,6 +63,8 @@ uv run pytest tests/ -v
 |-----|----------|-------------|
 | `DATA_SERVICE_BASE_URL` | yes | Upstream API base URL |
 | `RENDER_EXTERNAL_URL` | no | Self-ping URL (Render only) |
+| `SCREENSHOT_API_URL` | no | Screenshot API URL |
+| `SCREENSHOT_API_KEY` | no | Screenshot API key |
 | `HOST` | no | Bind address (default `0.0.0.0`) |
 | `PORT` | no | Port (default `8000`) |
 

@@ -1,7 +1,9 @@
 import base64
+import os
 import uuid
 from logging import getLogger
 
+import httpx
 import whois
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
@@ -67,3 +69,42 @@ async def base64_decode(body: Base64Input):
         return {"code": "200", "decoded": decoded.decode()}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid base64: {e}")
+
+
+class TranslateInput(BaseModel):
+    text: str = Field(..., description="Text to translate")
+    source: str = Field(default="auto", description="Source language (e.g. 'en', 'fr', 'auto')")
+    target: str = Field(default="en", description="Target language (e.g. 'en', 'fr')")
+
+
+@router.post("/translate", tags=["utils"])
+async def translate(body: TranslateInput):
+    try:
+        from deep_translator import GoogleTranslator
+        t = GoogleTranslator(source=body.source, target=body.target)
+        result = t.translate(body.text)
+        return {"code": "200", "source": body.source, "target": body.target, "text": body.text, "translated": result}
+    except Exception as e:
+        logger.error(f"Translation failed: {e}")
+        raise HTTPException(status_code=502, detail=f"Translation failed: {e}")
+
+
+@router.get("/screenshot", tags=["utils"])
+async def screenshot(url: str = Query(..., description="Website URL to screenshot")):
+    api_url = os.getenv("SCREENSHOT_API_URL", "")
+    api_key = os.getenv("SCREENSHOT_API_KEY", "")
+
+    if api_url and api_key:
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                params = {"key": api_key, "url": url, "device": "desktop"}
+                if "{url}" in api_url:
+                    target = api_url.replace("{url}", url)
+                else:
+                    target = api_url
+                resp = await client.get(target, params=params if "?" not in target else None)
+                return Response(content=resp.content, media_type=resp.headers.get("content-type", "image/png"))
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Screenshot failed: {e}")
+
+    raise HTTPException(status_code=501, detail="Screenshot not configured. Set SCREENSHOT_API_URL and SCREENSHOT_API_KEY")

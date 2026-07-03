@@ -75,7 +75,7 @@ class TestRoutes:
         d = resp.json()
         assert d["count"] > 0
         paths = [r["path"] for r in d["routes"]]
-        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois"]:
+        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/render", "/translate", "/screenshot"]:
             assert p in paths
 
     def test_sorted(self):
@@ -109,6 +109,51 @@ class TestProxyUI:
     def test_debug_button(self):
         resp = client.get("/proxy?debug-mode")
         assert "Dbg" in resp.text
+
+
+class TestRender:
+    def test_render_info(self):
+        resp = client.get("/render")
+        assert resp.status_code == 200
+        d = resp.json()
+        assert d["code"] == "200"
+        assert "render" in d
+
+
+class TestIPEnrichment:
+    def test_ip_has_geo_field(self):
+        resp = client.get("/ip")
+        assert resp.status_code == 200
+        assert "geo" in resp.json()
+
+    def test_ip_geo_is_none_or_dict(self):
+        resp = client.get("/ip")
+        g = resp.json()["geo"]
+        assert g is None or isinstance(g, dict)
+
+
+class TestTranslate:
+    def test_translate_missing_text(self):
+        resp = client.post("/translate", json={})
+        assert resp.status_code == 422
+
+    def test_translate_invalid_lang(self):
+        resp = client.post("/translate", json={"text": "hello", "target": "invalid"})
+        assert resp.status_code == 502
+
+    def test_translate_empty_text(self):
+        resp = client.post("/translate", json={"text": ""})
+        assert resp.status_code in (200, 422, 502)
+
+
+class TestScreenshot:
+    def test_screenshot_missing_url(self):
+        resp = client.get("/screenshot")
+        assert resp.status_code == 422
+
+    def test_screenshot_not_configured(self):
+        resp = client.get("/screenshot?url=https://example.com")
+        assert resp.status_code == 501
 
 
 class TestUtils:

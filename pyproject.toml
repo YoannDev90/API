@@ -10,6 +10,7 @@ dependencies = [
     "pydantic",
     "pydantic-settings",
     "python-whois",
+    "deep-translator",
 ]
 
 [project.optional-dependencies]
