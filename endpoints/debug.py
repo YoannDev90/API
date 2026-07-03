@@ -1,4 +1,3 @@
-import os
 import platform
 import sys
 import time
@@ -65,10 +64,5 @@ async def debug_headers(request: Request):
             "python": sys.version.split()[0],
             "platform": platform.system(),
             "platform_release": platform.release(),
-        },
-        "env": {
-            k: v
-            for k, v in sorted(os.environ.items())
-            if not any(s in k.lower() for s in ("key", "secret", "token", "password", "auth"))
         },
     }
