@@ -2,189 +2,189 @@
 
 Auto-generated. Run `scripts/generate_docs.sh` to refresh.
 
-| Method | Path | File |
-|--------|------|------|
-| get | /asn | asn.py |
-| post | /base64/decode | base64_decode.py |
-| post | /base64/encode | base64_encode.py |
-| get | /bmi | bmi.py |
-| get | /cdn-detect | cdn_detect.py |
-| get | /coin | coin.py |
-| post | /color | color.py |
-| get | /color/palette | color_palette.py |
-| get | /color/random | color_random.py |
-| get | /convert | convert.py |
-| get | /cookies | cookies.py |
-| get | /country | country.py |
-| get | /cron | cron.py |
-| get | /csp-analyze | csp_analyze.py |
-| get | /csp | csp.py |
-| get | /date/add | date_add.py |
-| get | /date/age | date_age.py |
-| get | /date/diff | date_diff.py |
-| get | /date/easter | date_easter.py |
-| get | /date/iso | date_iso.py |
-| get | /date/now | date_now.py |
-| get | /date/range | date_range.py |
-| get | /date/solstice | date_solstice.py |
-| get | /date/weekday | date_weekday.py |
-| get | /debug | debug.py |
-| get | /dice | dice.py |
-| get | /divisors | divisors.py |
-| get | /dkim | dkim.py |
-| get | /dmarc | dmarc.py |
-| get | /dns/all | dns_all.py |
-| get | /dns/batch | dns_batch.py |
-| get | /dns/caa | dns_caa.py |
-| get | /dns | dns.py |
-| get | /dns/dnssec | dns_dnssec.py |
-| get | /dns/ns | dns_ns.py |
-| get | /dns/propagation | dns_propagation.py |
-| get | /dns/ptr | dns_ptr.py |
-| get | /dns/resolve | dns_resolve.py |
-| get | /dns/soa | dns_soa.py |
-| get | /dns/srv | dns_srv.py |
-| get | /dns/zone-transfer | dns_zone_transfer.py |
-| post | /encode/ascii85 | encode_ascii85.py |
-| post | /encode/binary | encode_binary.py |
-| post | /encode/hex | encode_hex.py |
-| post | /encode/punycode | encode_punycode.py |
-| post | /encode/quoted-printable | encode_quoted_printable.py |
-| post | /encode/rot13 | encode_rot13.py |
-| post | /encode/rot47 | encode_rot47.py |
-| get | /factorial | factorial.py |
-| get | /factors | factors.py |
-| get | /favicon.ico | favicon.py |
-| get | /fibonacci | fibonacci.py |
-| post | /format/csv | format_csv.py |
-| post | /format/markdown-table | format_markdown_table.py |
-| get | /gcd | gcd.py |
-| get | /gzip | gzip_check.py |
-| post | /hash | hash.py |
-| get | /headers | headers.py |
-| get | /headers/security | security_headers.py |
-| get | /health | health.py |
-| get | /holidays | holidays.py |
-| get | /hsts | hsts_check.py |
-| get | /http-status | http_status.py |
-| get | /ip | client_ip.py |
-| get | /is-prime | is_prime.py |
-| post | /join | join.py |
-| post | /json/format | json_format.py |
-| post | /json/minify | json_minify.py |
-| post | /json/patch | json_patch.py |
-| post | /json/schema | json_schema.py |
-| post | /jwt/decode | jwt_decode.py |
-| get | /leap | leap.py |
-| post | /markdown | markdown.py |
-| get | /math/combinations | math_combinations.py |
-| get | /math | math.py |
-| get | /math/round | math_round.py |
-| get | /math/sequence | math_sequence.py |
-| get | /math/trig | math_trig.py |
-| get | /morse | morse.py |
-| get | /mx-lookup | mx_lookup.py |
-| get | /net/anycast | net_anycast.py |
-| get | /net/asn | net_asn.py |
-| get | /net/banner | net_banner.py |
-| get | /net/cert-chain | net_cert_chain.py |
-| get | /net/cloud | net_cloud.py |
-| get | /net/common-ports | net_common_ports.py |
-| get | /net/dns-resolve6 | net_dns_resolve6.py |
-| get | /net/http2 | net_http2.py |
-| get | /net/http3 | net_http3.py |
-| get | /net/http-compress | net_http_compress.py |
-| get | /net/ip-info | net_ip_info.py |
-| get | /net/ip-range | net_ip_range.py |
-| get | /net/ipv6 | net_ipv6.py |
-| get | /net/latency | net_latency.py |
-| get | /net/methods | net_methods.py |
-| get | /net/mtr | net_mtr.py |
-| get | /net/ocsp | net_ocsp.py |
-| get | /net/port | net_port.py |
-| get | /net/quic | net_quic.py |
-| get | /net/random-ip | net_random_ip.py |
-| get | /net/reverse-proxy | net_reverse_proxy.py |
-| get | /net/rir | net_rir.py |
-| get | /net/subnet | net_subnet.py |
-| get | /net/trace | net_trace.py |
-| get | /page/favicon | page_favicon.py |
-| get | /page/feeds | page_feeds.py |
-| get | /page/images | page_images.py |
-| get | /page/language | page_language.py |
-| get | /page/links | page_links.py |
-| get | /page/opengraph | page_opengraph.py |
-| get | /page/schema | page_schema.py |
-| get | /page/scripts | page_scripts.py |
-| get | /page/size | page_size.py |
-| get | /page/stylesheets | page_stylesheets.py |
-| get | /password | password.py |
-| get | /password-strength | password_strength.py |
-| get | /percentage | percentage.py |
-| get | /phone | phone.py |
-| get | /ping | ping_port.py |
-| get | /ports | ports.py |
-| get | /pretty-xml | pretty_xml.py |
-| get | /prime | prime.py |
-| get | /proxy | proxy_global.py |
-| get | /qr | qr.py |
-| get | /random/number | random_number.py |
-| get | /random/string | random_string.py |
-| get | /rdap | rdap.py |
-| get | /redirects | redirects.py |
-| post | /regex/test | regex_test.py |
-| get | /reverse-dns | reverse_dns.py |
-| get | /robots | robots.py |
-| get | /roman | roman.py |
-| get | / | root.py |
-| get | /routes | list_routes.py |
-| get | /screenshot | screenshot.py |
-| get | /sec/blacklist | sec_blacklist.py |
-| get | /sec/cache | sec_cache.py |
-| get | /sec/cookie | sec_cookie.py |
-| get | /sec/cors | sec_cors.py |
-| get | /sec/email-auth | sec_email_auth.py |
-| get | /sec/sri | sec_sri.py |
-| get | /sec/tls-versions | sec_tls_versions.py |
-| get | /sitemap | sitemap.py |
-| get | /slugify | slugify.py |
-| get | /spf | spf.py |
-| post | /split | split.py |
-| get | /ssl | ssl.py |
-| get | /stats | stats.py |
-| post | /string/count | string_count.py |
-| post | /string/repeat | string_repeat.py |
-| post | /string/reverse | string_reverse.py |
-| post | /text/align | text_align.py |
-| post | /text/censor | text_censor.py |
-| post | /text/checksum | text_checksum.py |
-| post | /text/columns | text_columns.py |
-| post | /text/dedup | text_dedup.py |
-| post | /text/extract | text_extract.py |
-| post | /text/find-replace | text_find_replace.py |
-| post | /text/number-lines | text_number_lines.py |
-| post | /text/palindrome | text_palindrome.py |
-| post | /text/search | text_search.py |
-| post | /text/shuffle | text_shuffle.py |
-| post | /text/sort | text_sort.py |
-| get | /text-stats | text_stats.py |
-| post | /text/strip | text_strip.py |
-| post | /text/table | text_table.py |
-| post | /text/truncate | text_truncate.py |
-| post | /text/wrap | text_wrap.py |
-| get | /timestamp | timestamp.py |
-| get | /tls | tls_check.py |
-| post | /translate | translate.py |
-| get | /unicode | unicode.py |
-| get | /uptime | uptime.py |
-| get | /url/compare | url_compare.py |
-| get | /url/info | url_info.py |
-| get | /user-agents | proxy_global.py |
-| get | /user-agents/random | user_agents_random.py |
-| get | /user-agent | user_agent.py |
-| get | /uuid | uuid.py |
-| get | /version | version.py |
-| post | /webhook/test | webhook_test.py |
-| get | /week | week.py |
-| get | /whois | whois.py |
-| **185 routes** | | |
+| Category | Method | Path | File |
+|----------|--------|------|------|
+| core | get | /asn | asn.py |
+| core | get | /bmi | bmi.py |
+| core | get | /cdn-detect | cdn_detect.py |
+| core | get | /coin | coin.py |
+| core | get | /color/palette | color_palette.py |
+| core | get | /color/random | color_random.py |
+| core | get | /convert | convert.py |
+| core | get | /cookies | cookies.py |
+| core | get | /country | country.py |
+| core | get | /cron | cron.py |
+| core | get | /csp-analyze | csp_analyze.py |
+| core | get | /csp | csp.py |
+| core | get | /debug | debug.py |
+| core | get | /dice | dice.py |
+| core | get | /divisors | divisors.py |
+| core | get | /dkim | dkim.py |
+| core | get | /dmarc | dmarc.py |
+| core | get | /dns | dns.py |
+| core | get | /factorial | factorial.py |
+| core | get | /factors | factors.py |
+| core | get | /favicon.ico | favicon.py |
+| core | get | /fibonacci | fibonacci.py |
+| core | get | /gcd | gcd.py |
+| core | get | /gzip | gzip_check.py |
+| core | get | /headers | headers.py |
+| core | get | /headers/security | security_headers.py |
+| core | get | /health | health.py |
+| core | get | /holidays | holidays.py |
+| core | get | /hsts | hsts_check.py |
+| core | get | /http-status | http_status.py |
+| core | get | /ip | client_ip.py |
+| core | get | /is-prime | is_prime.py |
+| core | get | /leap | leap.py |
+| core | get | /math | math.py |
+| core | get | /morse | morse.py |
+| core | get | /mx-lookup | mx_lookup.py |
+| core | get | /password | password.py |
+| core | get | /password-strength | password_strength.py |
+| core | get | /percentage | percentage.py |
+| core | get | /phone | phone.py |
+| core | get | /ping | ping_port.py |
+| core | get | /ports | ports.py |
+| core | get | /pretty-xml | pretty_xml.py |
+| core | get | /prime | prime.py |
+| core | get | /proxy | proxy_global.py |
+| core | get | /qr | qr.py |
+| core | get | /random/number | random_number.py |
+| core | get | /random/string | random_string.py |
+| core | get | /rdap | rdap.py |
+| core | get | /redirects | redirects.py |
+| core | get | /reverse-dns | reverse_dns.py |
+| core | get | /robots | robots.py |
+| core | get | /roman | roman.py |
+| core | get | / | root.py |
+| core | get | /routes | list_routes.py |
+| core | get | /screenshot | screenshot.py |
+| core | get | /sitemap | sitemap.py |
+| core | get | /slugify | slugify.py |
+| core | get | /spf | spf.py |
+| core | get | /ssl | ssl.py |
+| core | get | /stats | stats.py |
+| core | get | /timestamp | timestamp.py |
+| core | get | /tls | tls_check.py |
+| core | get | /unicode | unicode.py |
+| core | get | /uptime | uptime.py |
+| core | get | /url/compare | url_compare.py |
+| core | get | /url/info | url_info.py |
+| core | get | /user-agents | proxy_global.py |
+| core | get | /user-agents/random | user_agents_random.py |
+| core | get | /user-agent | user_agent.py |
+| core | get | /uuid | uuid.py |
+| core | get | /version | version.py |
+| core | get | /week | week.py |
+| core | get | /whois | whois.py |
+| core | post | /base64/decode | base64_decode.py |
+| core | post | /base64/encode | base64_encode.py |
+| core | post | /color | color.py |
+| core | post | /hash | hash.py |
+| core | post | /join | join.py |
+| core | post | /json/format | json_format.py |
+| core | post | /json/minify | json_minify.py |
+| core | post | /json/patch | json_patch.py |
+| core | post | /json/schema | json_schema.py |
+| core | post | /jwt/decode | jwt_decode.py |
+| core | post | /markdown | markdown.py |
+| core | post | /regex/test | regex_test.py |
+| core | post | /split | split.py |
+| core | post | /string/count | string_count.py |
+| core | post | /string/repeat | string_repeat.py |
+| core | post | /string/reverse | string_reverse.py |
+| core | post | /translate | translate.py |
+| core | post | /webhook/test | webhook_test.py |
+| date | get | /date/add | date_add.py |
+| date | get | /date/age | date_age.py |
+| date | get | /date/diff | date_diff.py |
+| date | get | /date/easter | date_easter.py |
+| date | get | /date/iso | date_iso.py |
+| date | get | /date/now | date_now.py |
+| date | get | /date/range | date_range.py |
+| date | get | /date/solstice | date_solstice.py |
+| date | get | /date/weekday | date_weekday.py |
+| dns | get | /dns/all | dns_all.py |
+| dns | get | /dns/batch | dns_batch.py |
+| dns | get | /dns/caa | dns_caa.py |
+| dns | get | /dns/dnssec | dns_dnssec.py |
+| dns | get | /dns/ns | dns_ns.py |
+| dns | get | /dns/propagation | dns_propagation.py |
+| dns | get | /dns/ptr | dns_ptr.py |
+| dns | get | /dns/resolve | dns_resolve.py |
+| dns | get | /dns/soa | dns_soa.py |
+| dns | get | /dns/srv | dns_srv.py |
+| dns | get | /dns/zone-transfer | dns_zone_transfer.py |
+| encode | post | /encode/ascii85 | encode_ascii85.py |
+| encode | post | /encode/binary | encode_binary.py |
+| encode | post | /encode/hex | encode_hex.py |
+| encode | post | /encode/punycode | encode_punycode.py |
+| encode | post | /encode/quoted-printable | encode_quoted_printable.py |
+| encode | post | /encode/rot13 | encode_rot13.py |
+| encode | post | /encode/rot47 | encode_rot47.py |
+| format | post | /format/csv | format_csv.py |
+| format | post | /format/markdown-table | format_markdown_table.py |
+| math | get | /math/combinations | math_combinations.py |
+| math | get | /math/round | math_round.py |
+| math | get | /math/sequence | math_sequence.py |
+| math | get | /math/trig | math_trig.py |
+| net | get | /net/anycast | net_anycast.py |
+| net | get | /net/asn | net_asn.py |
+| net | get | /net/banner | net_banner.py |
+| net | get | /net/cert-chain | net_cert_chain.py |
+| net | get | /net/cloud | net_cloud.py |
+| net | get | /net/common-ports | net_common_ports.py |
+| net | get | /net/dns-resolve6 | net_dns_resolve6.py |
+| net | get | /net/http2 | net_http2.py |
+| net | get | /net/http3 | net_http3.py |
+| net | get | /net/http-compress | net_http_compress.py |
+| net | get | /net/ip-info | net_ip_info.py |
+| net | get | /net/ip-range | net_ip_range.py |
+| net | get | /net/ipv6 | net_ipv6.py |
+| net | get | /net/latency | net_latency.py |
+| net | get | /net/methods | net_methods.py |
+| net | get | /net/mtr | net_mtr.py |
+| net | get | /net/ocsp | net_ocsp.py |
+| net | get | /net/port | net_port.py |
+| net | get | /net/quic | net_quic.py |
+| net | get | /net/random-ip | net_random_ip.py |
+| net | get | /net/reverse-proxy | net_reverse_proxy.py |
+| net | get | /net/rir | net_rir.py |
+| net | get | /net/subnet | net_subnet.py |
+| net | get | /net/trace | net_trace.py |
+| page | get | /page/favicon | page_favicon.py |
+| page | get | /page/feeds | page_feeds.py |
+| page | get | /page/images | page_images.py |
+| page | get | /page/language | page_language.py |
+| page | get | /page/links | page_links.py |
+| page | get | /page/opengraph | page_opengraph.py |
+| page | get | /page/schema | page_schema.py |
+| page | get | /page/scripts | page_scripts.py |
+| page | get | /page/size | page_size.py |
+| page | get | /page/stylesheets | page_stylesheets.py |
+| sec | get | /sec/blacklist | sec_blacklist.py |
+| sec | get | /sec/cache | sec_cache.py |
+| sec | get | /sec/cookie | sec_cookie.py |
+| sec | get | /sec/cors | sec_cors.py |
+| sec | get | /sec/email-auth | sec_email_auth.py |
+| sec | get | /sec/sri | sec_sri.py |
+| sec | get | /sec/tls-versions | sec_tls_versions.py |
+| text | get | /text-stats | text_stats.py |
+| text | post | /text/align | text_align.py |
+| text | post | /text/censor | text_censor.py |
+| text | post | /text/checksum | text_checksum.py |
+| text | post | /text/columns | text_columns.py |
+| text | post | /text/dedup | text_dedup.py |
+| text | post | /text/extract | text_extract.py |
+| text | post | /text/find-replace | text_find_replace.py |
+| text | post | /text/number-lines | text_number_lines.py |
+| text | post | /text/palindrome | text_palindrome.py |
+| text | post | /text/search | text_search.py |
+| text | post | /text/shuffle | text_shuffle.py |
+| text | post | /text/sort | text_sort.py |
+| text | post | /text/strip | text_strip.py |
+| text | post | /text/table | text_table.py |
+| text | post | /text/truncate | text_truncate.py |
+| text | post | /text/wrap | text_wrap.py |
+| **185 routes** | | | |

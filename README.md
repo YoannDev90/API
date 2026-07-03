@@ -21,13 +21,19 @@ Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for R
 ├── uv.lock
 ├── ENDPOINTS.md
 ├── scripts/
-│   └── generate_docs.sh
 ├── tests/
-│   ├── __init__.py
-│   └── test_endpoints.py
 ├── .github/
-│   └── workflows/ci.yml
-└── endpoints/   (183 files, auto-discovered)
+└── endpoints/   (182 files)
+    ├── date/   (9 files)
+    ├── dns_tools/   (11 files)
+    ├── encode/   (7 files)
+    ├── format/   (2 files)
+    ├── math_tools/   (4 files)
+    ├── net/   (24 files)
+    ├── page/   (10 files)
+    ├── __pycache__/   (0 files)
+    ├── sec/   (7 files)
+    ├── text/   (17 files)
 ```
 
 ## Quick start

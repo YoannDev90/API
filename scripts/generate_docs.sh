@@ -10,26 +10,27 @@ ENDPOINTS_MD="ENDPOINTS.md"
   echo
   echo "Auto-generated. Run \`scripts/generate_docs.sh\` to refresh."
   echo
-  echo "| Method | Path | File |"
-  echo "|--------|------|------|"
+  echo "| Category | Method | Path | File |"
+  echo "|----------|--------|------|------|"
 } > "$ENDPOINTS_MD"
 
 find endpoints -name '*.py' ! -name '__init__.py' -print | sort | while read -r file; do
-  name=$(echo "$file" | sed 's|^endpoints/||' | sed 's|\.py$||' | tr '/' '.')
+  dir=$(dirname "$file" | sed 's|^endpoints||' | sed 's|^/||' | sed 's|^$|core|' | sed 's|dns_tools|dns|' | sed 's|math_tools|math|')
+  name=$(basename "$file" .py)
   while IFS=: read -r line; do
     method=$(echo "$line" | sed -n 's/.*@router\.\([a-z]*\)(.*/\1/p')
     path=$(echo "$line" | sed -n "s/.*@router\.$method(\"\([^\"]*\)\".*/\1/p")
-    [ -n "$method" ] && [ -n "$path" ] && echo "| $method | $path | $name.py |"
+    [ -n "$method" ] && [ -n "$path" ] && echo "| $dir | $method | $path | $name.py |"
   done < <(grep -E '@router\.(get|post|put|delete|patch|api_route)\(' "$file" 2>/dev/null || true)
 done >> "$ENDPOINTS_MD"
 
-# sort by path (keep header rows at top)
+# sort by category then path (keep header rows at top)
 HEADER_LINES=6
-BODY=$(tail -n +$((HEADER_LINES+1)) "$ENDPOINTS_MD" | sort -t'|' -k3)
+BODY=$(tail -n +$((HEADER_LINES+1)) "$ENDPOINTS_MD" | sort -t'|' -k1 -k3)
 { sed -n "1,${HEADER_LINES}p" "$ENDPOINTS_MD"; echo "$BODY"; } > "$ENDPOINTS_MD.tmp" && mv "$ENDPOINTS_MD.tmp" "$ENDPOINTS_MD"
 
 COUNT=$(tail -n +5 "$ENDPOINTS_MD" | wc -l)
-echo "| **${COUNT} routes** | | |" >> "$ENDPOINTS_MD"
+echo "| **${COUNT} routes** | | | |" >> "$ENDPOINTS_MD"
 echo "→ $ENDPOINTS_MD ($COUNT routes)"
 
 # ── Update README tree ───────────────────────────────────────────────────
