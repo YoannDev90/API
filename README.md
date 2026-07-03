@@ -13,16 +13,13 @@ Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for R
 ├── endpoints/          # One file per endpoint, loaded dynamically
 │   ├── root.py              # GET /
 │   ├── health.py            # GET /health
-│   ├── ping.py              # GET /ping
 │   ├── uptime.py            # GET /uptime
 │   ├── version.py           # GET /version
 │   ├── client_ip.py         # GET /ip
 │   ├── debug.py             # GET /debug
 │   ├── favicon.py           # GET /favicon.ico
 │   ├── list_routes.py       # GET /routes
-│   ├── proxy_custom.py      # POST /proxy
-│   ├── proxy_global.py      # /proxy/{path:path}
-│   ├── api_docs.py          # GET /api/docs
+│   ├── proxy_global.py      # GET /proxy (UI) + /proxy/{path:path} (proxy)
 │   └── api_catchall.py      # /api/{path:path} (catch-all, loaded last)
 └── requirements.txt
 ```

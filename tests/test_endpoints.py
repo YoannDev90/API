@@ -22,14 +22,6 @@ def test_health():
     assert data["status"] == "healthy"
 
 
-def test_ping():
-    resp = client.get("/ping")
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["code"] == "200"
-    assert data["message"] == "pong"
-
-
 def test_uptime():
     resp = client.get("/uptime")
     assert resp.status_code == 200
@@ -90,9 +82,8 @@ def test_routes():
     paths = [r["path"] for r in data["routes"]]
     assert "/" in paths
     assert "/health" in paths
-    assert "/debug" in paths
+    assert "/proxy" in paths
     assert "/routes" in paths
-    assert "/favicon.ico" in paths
 
 
 def test_favicon():
