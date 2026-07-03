@@ -11,6 +11,7 @@ dependencies = [
     "pydantic-settings",
     "python-whois",
     "deep-translator",
+    "dnspython",
 ]
 
 [project.optional-dependencies]

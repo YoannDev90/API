@@ -1,8 +1,15 @@
 import base64
+import datetime
+import hashlib
+import json
 import os
+import secrets
+import string
+import socket
 import uuid
 from logging import getLogger
 
+import dns.resolver
 import httpx
 import whois
 from fastapi import APIRouter, HTTPException, Query
@@ -40,15 +47,13 @@ async def whois_lookup(domain: str = Query(..., description="Domain name to quer
 
 
 def _fmt(d):
-    if not d:
-        return None
-    if isinstance(d, list):
-        return [str(x) for x in d if x]
+    if not d: return None
+    if isinstance(d, list): return [str(x) for x in d if x]
     return str(d)
 
 
 @router.get("/uuid", tags=["utils"])
-async def generate_uuid(count: int = Query(default=1, ge=1, le=100, description="Number of UUIDs")):
+async def generate_uuid(count: int = Query(default=1, ge=1, le=100)):
     return {"code": "200", "uuids": [str(uuid.uuid4()) for _ in range(count)]}
 
 
@@ -67,14 +72,14 @@ async def base64_decode(body: Base64Input):
     try:
         decoded = base64.urlsafe_b64decode(body.data + "==")
         return {"code": "200", "decoded": decoded.decode()}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid base64: {e}")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid base64")
 
 
 class TranslateInput(BaseModel):
     text: str = Field(..., description="Text to translate")
-    source: str = Field(default="auto", description="Source language (e.g. 'en', 'fr', 'auto')")
-    target: str = Field(default="en", description="Target language (e.g. 'en', 'fr')")
+    source: str = Field(default="auto")
+    target: str = Field(default="en")
 
 
 @router.post("/translate", tags=["utils"])
@@ -90,21 +95,80 @@ async def translate(body: TranslateInput):
 
 
 @router.get("/screenshot", tags=["utils"])
-async def screenshot(url: str = Query(..., description="Website URL to screenshot")):
+async def screenshot(url: str = Query(..., description="Website URL")):
     api_url = os.getenv("SCREENSHOT_API_URL", "")
     api_key = os.getenv("SCREENSHOT_API_KEY", "")
-
     if api_url and api_key:
         try:
             async with httpx.AsyncClient(timeout=60) as client:
                 params = {"key": api_key, "url": url, "device": "desktop"}
-                if "{url}" in api_url:
-                    target = api_url.replace("{url}", url)
-                else:
-                    target = api_url
+                target = api_url.replace("{url}", url) if "{url}" in api_url else api_url
                 resp = await client.get(target, params=params if "?" not in target else None)
                 return Response(content=resp.content, media_type=resp.headers.get("content-type", "image/png"))
         except Exception as e:
             raise HTTPException(status_code=502, detail=f"Screenshot failed: {e}")
+    raise HTTPException(status_code=501, detail="Set SCREENSHOT_API_URL and SCREENSHOT_API_KEY")
 
-    raise HTTPException(status_code=501, detail="Screenshot not configured. Set SCREENSHOT_API_URL and SCREENSHOT_API_KEY")
+
+class HashInput(BaseModel):
+    text: str = Field(..., description="Text to hash")
+
+
+@router.post("/hash", tags=["utils"])
+async def hash_text(body: HashInput):
+    text = body.text.encode()
+    return {
+        "code": "200",
+        "input": body.text,
+        "md5": hashlib.md5(text).hexdigest(),
+        "sha1": hashlib.sha1(text).hexdigest(),
+        "sha256": hashlib.sha256(text).hexdigest(),
+        "sha512": hashlib.sha512(text).hexdigest(),
+    }
+
+
+@router.get("/password", tags=["utils"])
+async def password(length: int = Query(default=20, ge=4, le=128)):
+    chars = string.ascii_letters + string.digits + "!@#$%^&*"
+    pw = "".join(secrets.choice(chars) for _ in range(length))
+    return {"code": "200", "length": length, "password": pw}
+
+
+@router.get("/timestamp", tags=["utils"])
+async def timestamp(value: int = Query(description="Unix timestamp in seconds")):
+    try:
+        dt = datetime.datetime.fromtimestamp(value, tz=datetime.timezone.utc)
+        return {
+            "code": "200",
+            "unix_seconds": value,
+            "iso_8601": dt.isoformat(),
+            "utc": dt.strftime("%Y-%m-%d %H:%M:%S UTC"),
+            "date": dt.strftime("%Y-%m-%d"),
+            "time": dt.strftime("%H:%M:%S"),
+            "weekday": dt.strftime("%A"),
+        }
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid timestamp")
+
+
+@router.get("/dns", tags=["utils"])
+async def dns_lookup(
+    domain: str = Query(..., description="Domain to query"),
+    type: str = Query(default="A", description="Record type (A, AAAA, MX, NS, TXT, CNAME, SOA)"),
+):
+    types_upper = type.upper()
+    valid = {"A", "AAAA", "MX", "NS", "TXT", "CNAME", "SOA", "PTR", "SRV", "CAA"}
+    if types_upper not in valid:
+        raise HTTPException(status_code=400, detail=f"Invalid type. Valid: {', '.join(sorted(valid))}")
+
+    try:
+        answers = dns.resolver.resolve(domain, types_upper)
+        records = [str(r) for r in answers]
+        return {"code": "200", "domain": domain, "type": types_upper, "records": records}
+    except dns.resolver.NoAnswer:
+        return {"code": "200", "domain": domain, "type": types_upper, "records": []}
+    except dns.resolver.NXDOMAIN:
+        raise HTTPException(status_code=404, detail="Domain not found")
+    except Exception as e:
+        logger.error(f"DNS lookup failed for {domain} {type}: {e}")
+        raise HTTPException(status_code=502, detail=f"DNS lookup failed: {e}")

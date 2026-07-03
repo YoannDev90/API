@@ -75,7 +75,7 @@ class TestRoutes:
         d = resp.json()
         assert d["count"] > 0
         paths = [r["path"] for r in d["routes"]]
-        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents"]:
+        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents", "/hash", "/password", "/timestamp", "/dns"]:
             assert p in paths
 
     def test_sorted(self):
@@ -156,6 +156,72 @@ class TestScreenshot:
     def test_screenshot_not_configured(self):
         resp = client.get("/screenshot?url=https://example.com")
         assert resp.status_code == 501
+
+
+class TestHash:
+    def test_hash(self):
+        resp = client.post("/hash", json={"text": "hello"})
+        assert resp.status_code == 200
+        d = resp.json()
+        assert d["md5"] == "5d41402abc4b2a76b9719d911017c592"
+        assert len(d["sha256"]) == 64
+
+    def test_hash_missing(self):
+        assert client.post("/hash", json={}).status_code == 422
+
+
+class TestPassword:
+    def test_default_length(self):
+        resp = client.get("/password")
+        assert resp.status_code == 200
+        assert len(resp.json()["password"]) == 20
+
+    def test_custom_length(self):
+        resp = client.get("/password?length=8")
+        assert len(resp.json()["password"]) == 8
+
+    def test_invalid_length(self):
+        assert client.get("/password?length=200").status_code == 422
+        assert client.get("/password?length=0").status_code == 422
+
+
+class TestTimestamp:
+    def test_valid(self):
+        resp = client.get("/timestamp?value=1700000000")
+        assert resp.status_code == 200
+        d = resp.json()
+        assert "2023" in d["iso_8601"]
+        assert d["weekday"] in ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+    def test_negative(self):
+        resp = client.get("/timestamp?value=-1")
+        assert resp.status_code in (200, 400)
+
+    def test_missing(self):
+        assert client.get("/timestamp").status_code == 422
+
+
+class TestDNS:
+    def test_a_record(self):
+        resp = client.get("/dns?domain=example.com&type=A")
+        assert resp.status_code == 200
+        d = resp.json()
+        assert d["type"] == "A"
+        assert len(d["records"]) > 0
+
+    def test_mx_record(self):
+        resp = client.get("/dns?domain=example.com&type=MX")
+        assert resp.status_code == 200
+        assert len(resp.json()["records"]) > 0
+
+    def test_invalid_type(self):
+        assert client.get("/dns?domain=example.com&type=INVALID").status_code == 400
+
+    def test_nxdomain(self):
+        assert client.get("/dns?domain=nonexistent-domain-xyz123.com").status_code == 404
+
+    def test_missing_domain(self):
+        assert client.get("/dns?type=A").status_code == 422
 
 
 class TestUtils:
