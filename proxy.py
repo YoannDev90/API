@@ -7,7 +7,6 @@ import urllib.parse
 import httpx
 from starlette.responses import Response
 from logging import getLogger
-from config import config
 
 logger = getLogger("api-proxy")
 
@@ -55,7 +54,7 @@ def _rewrite_html(html: str, original_url: str) -> str:
 
 async def proxy_request(request, path: str = "", target_url: str = None, user_agent: str = None):
     if target_url is None:
-        target_url = f"{config.base_url.rstrip('/')}/{path}"
+        raise ValueError("target_url is required")
 
     qs = request.url.query
     if qs:
@@ -65,12 +64,12 @@ async def proxy_request(request, path: str = "", target_url: str = None, user_ag
         if params:
             target_url += "?" + urllib.parse.urlencode(params, doseq=True)
 
-    client_ip = request.scope.get("client_ip", "unknown")
-    logger.info(f"Proxy: {request.method} {target_url} from {client_ip}")
+    logger.info(f"Proxy: {request.method} {target_url}")
 
     try:
         body = await request.body()
         ua = user_agent or "API-Proxy/1.0"
+
         headers = {"user-agent": ua, "accept": "*/*"}
         if body:
             headers["content-type"] = "application/octet-stream"
@@ -89,7 +88,6 @@ async def proxy_request(request, path: str = "", target_url: str = None, user_ag
         resp_status = resp.status_code
         resp_is_html = "text/html" in resp_headers.get("content-type", "")
 
-        # Cloudflare challenge detected -- retry with cloudscraper
         if resp_status == 403 and resp_headers.get("cf-mitigated") == "challenge":
             logger.info(f"Cloudflare challenge for {target_url}, retrying with cloudscraper")
             try:
@@ -107,7 +105,6 @@ async def proxy_request(request, path: str = "", target_url: str = None, user_ag
             except Exception as e:
                 logger.error(f"cloudscraper failed: {e}")
 
-        # rewrite URLs in HTML
         if resp_is_html and resp_content:
             try:
                 html = resp_content.decode("utf-8", errors="replace")
@@ -120,15 +117,8 @@ async def proxy_request(request, path: str = "", target_url: str = None, user_ag
             k: v
             for k, v in resp_headers.items()
             if k.lower()
-            not in (
-                "x-frame-options",
-                "content-security-policy",
-                "frame-options",
-                "content-encoding",
-                "transfer-encoding",
-                "content-length",
-                "alt-svc",
-            )
+            not in ("x-frame-options", "content-security-policy", "frame-options",
+                    "content-encoding", "transfer-encoding", "content-length", "alt-svc")
         }
 
         is_debug = request.headers.get("x-proxy-debug") == "true"

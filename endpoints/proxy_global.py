@@ -8,7 +8,6 @@ from logging import getLogger
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 from proxy import proxy_request
-from config import config
 
 router = APIRouter()
 logger = getLogger("api-proxy")
@@ -116,8 +115,7 @@ async def list_user_agents():
     path = os.path.join(os.path.dirname(__file__), "..", "user_agents.json")
     try:
         with open(path) as f:
-            data = json.load(f)
-        return data
+            return json.load(f)
     except Exception:
         return {"API-Proxy/1.0": "API-Proxy/1.0"}
 
@@ -139,9 +137,6 @@ async def catch_all_proxy(request: Request, path: str):
 
     hostname = target_url.split("://")[1].split("/")[0].split(":")[0]
     await _check_ssrf(hostname)
-
-    if config.base_url and target_url.startswith(config.base_url):
-        raise HTTPException(status_code=403, detail="Forbidden")
 
     ua_name = request.query_params.get("ua")
     ua = _resolve_ua(ua_name) if ua_name else None
