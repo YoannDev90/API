@@ -588,6 +588,25 @@ class TestSplitJoin:
         assert resp.json()["result"] == "a,b,c"
 
 
+class TestAllModules:
+    """Verify every endpoint file loads its router correctly"""
+    def test_all_modules_have_router(self):
+        from pathlib import Path
+        import importlib
+        d = Path(__file__).parent.parent / "endpoints"
+        missing = []
+        for f in sorted(d.glob("*.py")):
+            if f.name == "__init__.py": continue
+            m = importlib.import_module(f"endpoints.{f.stem}")
+            if not hasattr(m, "router"):
+                missing.append(f.stem)
+        assert not missing, f"Modules missing router: {missing}"
+
+    def test_routes_count(self):
+        from app import app
+        assert len(app.routes) >= 80
+
+
 class TestMiddleware:
     def test_404(self):
         assert client.get("/nonexistent").status_code == 404
