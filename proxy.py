@@ -1,3 +1,7 @@
+import json
+import os
+from urllib.parse import parse_qs, urlencode
+
 import httpx
 from starlette.responses import Response
 from logging import getLogger
@@ -5,20 +9,41 @@ from config import config
 
 logger = getLogger("api-proxy")
 
+_USER_AGENTS = None
 
-async def proxy_request(request, path: str = "", target_url: str = None):
+
+def _load_uas():
+    global _USER_AGENTS
+    if _USER_AGENTS is not None:
+        return _USER_AGENTS
+    path = os.path.join(os.path.dirname(__file__), "user_agents.json")
+    try:
+        with open(path) as f:
+            _USER_AGENTS = json.load(f)
+    except Exception:
+        _USER_AGENTS = {"Default": "API-Proxy/1.0"}
+    return _USER_AGENTS
+
+
+async def proxy_request(request, path: str = "", target_url: str = None, user_agent: str = None):
     if target_url is None:
         target_url = f"{config.base_url.rstrip('/')}/{path}"
 
-    if request.url.query:
-        target_url += f"?{request.url.query}"
+    qs = request.url.query
+    if qs:
+        params = parse_qs(qs)
+        params.pop("ua", None)
+        params.pop("debug", None)
+        if params:
+            target_url += "?" + urlencode(params, doseq=True)
 
     client_ip = request.scope.get("client_ip", "unknown")
     logger.info(f"Proxy: {request.method} {target_url} from {client_ip}")
 
     try:
         body = await request.body()
-        headers = {"user-agent": "API-Proxy/1.0", "accept": "*/*"}
+        ua = user_agent or "API-Proxy/1.0"
+        headers = {"user-agent": ua, "accept": "*/*"}
         if body:
             headers["content-type"] = "application/octet-stream"
 
@@ -44,6 +69,19 @@ async def proxy_request(request, path: str = "", target_url: str = None):
                     "alt-svc",
                 )
             }
+
+            is_debug = request.headers.get("x-proxy-debug") == "true"
+            if is_debug:
+                proxied_headers["x-proxy-status"] = str(resp.status_code)
+                proxied_headers["x-proxy-ua"] = ua
+                proxied_headers["x-proxy-redirects"] = str(len(resp.history))
+                if resp.history:
+                    redirect_chain = " -> ".join(str(r.status_code) + " " + str(r.url) for r in resp.history)
+                    redirect_chain += " -> " + str(resp.status_code) + " " + str(resp.url)
+                    proxied_headers["x-proxy-redirect-chain"] = redirect_chain
+                proxied_headers["x-proxy-final-url"] = str(resp.url)
+                proxied_headers["x-proxy-content-type"] = resp.headers.get("content-type", "")
+
             return Response(
                 content=resp.content,
                 status_code=resp.status_code,

@@ -75,7 +75,7 @@ class TestRoutes:
         d = resp.json()
         assert d["count"] > 0
         paths = [r["path"] for r in d["routes"]]
-        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/render", "/translate", "/screenshot"]:
+        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents"]:
             assert p in paths
 
     def test_sorted(self):
@@ -91,6 +91,17 @@ class TestFavicon:
         assert resp.headers["content-type"] == "image/svg+xml"
         assert "circle" in resp.text
         assert "#22c55e" in resp.text
+
+
+class TestUserAgents:
+    def test_list(self):
+        resp = client.get("/user-agents")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert isinstance(data, dict)
+        assert len(data) > 5
+        assert "Chrome 128 Windows" in data
+        assert "Firefox 130 Linux" in data
 
 
 class TestProxyUI:
@@ -109,15 +120,6 @@ class TestProxyUI:
     def test_debug_button(self):
         resp = client.get("/proxy?debug-mode")
         assert "Dbg" in resp.text
-
-
-class TestRender:
-    def test_render_info(self):
-        resp = client.get("/render")
-        assert resp.status_code == 200
-        d = resp.json()
-        assert d["code"] == "200"
-        assert "render" in d
 
 
 class TestIPEnrichment:

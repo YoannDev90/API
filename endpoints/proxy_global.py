@@ -1,4 +1,6 @@
 import ipaddress
+import json
+import os
 import socket
 import urllib.parse
 from logging import getLogger
@@ -20,13 +22,14 @@ PROXY_UI = """<!DOCTYPE html>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:system-ui,-apple-system,sans-serif;background:#111;color:#eee}
-.top{background:#1a1a2e;padding:10px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;z-index:99}
-.top input{flex:1;padding:8px 12px;border:1px solid #333;border-radius:6px;background:#222;color:#eee;font-size:14px}
+.top{background:#1a1a2e;padding:8px 12px;display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:99;flex-wrap:wrap}
+.top input{flex:1;min-width:150px;padding:8px 12px;border:1px solid #333;border-radius:6px;background:#222;color:#eee;font-size:14px}
 .top input:focus{outline:none;border-color:#22c55e}
-.top button{padding:8px 12px;background:#22c55e;color:#000;border:none;border-radius:6px;font-weight:600;cursor:pointer}
+.top button{padding:8px 14px;background:#22c55e;color:#000;border:none;border-radius:6px;font-weight:600;cursor:pointer}
 .top button:hover{background:#16a34a}
 .top .dbt{background:#555;font-size:11px;padding:8px}
 .top .dbt.on{background:#eab308;color:#000}
+.top select{padding:6px 8px;border:1px solid #333;border-radius:6px;background:#222;color:#eee;font-size:12px;max-width:180px}
 iframe{width:100%;height:calc(100vh - 52px);border:none;background:#fff}
 #dbg{display:none;background:#1a1a2e;border-top:2px solid #333;padding:12px;font:12px/1.4 monospace;overflow:auto;max-height:50vh}
 #dbg.open{display:block}
@@ -39,7 +42,8 @@ iframe{width:100%;height:calc(100vh - 52px);border:none;background:#fff}
 </head>
 <body>
 <div class="top">
-<input id="url" type="text" placeholder="Enter URL (e.g. https://example.com)" autofocus>
+<input id="url" type="text" placeholder="URL (e.g. https://example.com)" autofocus>
+<select id="uaSelect"></select>
 <button id="goBtn">Go</button>
 <button id="dbgBtn" class="dbt">Dbg</button>
 </div>
@@ -47,7 +51,20 @@ iframe{width:100%;height:calc(100vh - 52px);border:none;background:#fff}
 <div id="dbg"></div>
 <script>
 document.addEventListener("DOMContentLoaded",function(){
-  var url=document.getElementById("url"),btn=document.getElementById("goBtn"),f=document.getElementById("frame"),dbg=document.getElementById("dbg"),dbgBtn=document.getElementById("dbgBtn");
+  var url=document.getElementById("url"),btn=document.getElementById("goBtn"),f=document.getElementById("frame"),dbg=document.getElementById("dbg"),dbgBtn=document.getElementById("dbgBtn"),uaSelect=document.getElementById("uaSelect");
+  var savedUA=localStorage.getItem("proxy_ua")||"";
+  fetch("/user-agents").then(function(r){return r.json()}).then(function(uas){
+    var names=Object.keys(uas);
+    for(var i=0;i<names.length;i++){
+      var opt=document.createElement("option");
+      opt.value=names[i];
+      opt.textContent=names[i];
+      if(names[i]===savedUA)opt.selected=true;
+      uaSelect.appendChild(opt);
+    }
+    if(!savedUA)uaSelect.selectedIndex=0;
+  });
+  uaSelect.addEventListener("change",function(){localStorage.setItem("proxy_ua",this.value)});
   var debugMode=location.search.includes("debug-mode");
   dbgBtn.classList.toggle("on",debugMode);
   dbg.classList.toggle("open",debugMode);
@@ -56,16 +73,24 @@ document.addEventListener("DOMContentLoaded",function(){
     var u=url.value.trim();
     if(!u)return;
     if(!u.startsWith("http://")&&!u.startsWith("https://"))u="https://"+u;
-    var p="/proxy/"+encodeURIComponent(u);
+    var ua=uaSelect.value?"&ua="+encodeURIComponent(uaSelect.value):"";
+    var p="/proxy/"+encodeURIComponent(u)+ua;
     btn.textContent="...";
     if(debugMode){
-      dbg.innerHTML="<div class=y>Fetching: "+u+"</div>";
-      fetch(p).then(function(r){
-        var h="";
-        r.headers.forEach(function(v,k){h+=k+": "+v+"\\n"});
+      dbg.innerHTML="<div class=y>Fetching: "+u+"</div><div class=b>UA: "+uaSelect.value+"</div>";
+      fetch(p,{headers:{"X-Proxy-Debug":"true"}}).then(function(r){
+        var h="",proxyInfo="";
+        r.headers.forEach(function(v,k){
+          var lk=k.toLowerCase();
+          if(lk.startsWith("x-proxy-")){proxyInfo+=k.slice(8)+": "+v+"\\n"}
+          else{h+=k+": "+v+"\\n"}
+        });
         r.text().then(function(b){
           var s=r.ok?"r":"rr";
-          dbg.innerHTML="<div class=b>Status: <span class="+s+">"+r.status+" "+r.statusText+"</span></div><div class=y>Headers:</div><pre>"+h+"</pre><div class=y>Body (2KB):</div><pre>"+b.slice(0,2048)+"</pre>";
+          var info="<div class=b>Status: <span class="+s+">"+r.status+" "+r.statusText+"</span></div>";
+          if(proxyInfo)info+="<div class=y>Proxy:</div><pre>"+proxyInfo+"</pre>";
+          info+="<div class=y>Response Headers:</div><pre>"+h+"</pre><div class=y>Body (2KB):</div><pre>"+b.slice(0,2048)+"</pre>";
+          dbg.innerHTML=info;
           btn.textContent="Go";
         });
       }).catch(function(e){
@@ -84,6 +109,17 @@ document.addEventListener("DOMContentLoaded",function(){
 </script>
 </body>
 </html>"""
+
+
+@router.get("/user-agents", tags=["proxy"])
+async def list_user_agents():
+    path = os.path.join(os.path.dirname(__file__), "..", "user_agents.json")
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        return data
+    except Exception:
+        return {"API-Proxy/1.0": "API-Proxy/1.0"}
 
 
 @router.get("/proxy", tags=["proxy"])
@@ -107,8 +143,21 @@ async def catch_all_proxy(request: Request, path: str):
     if config.base_url and target_url.startswith(config.base_url):
         raise HTTPException(status_code=403, detail="Forbidden")
 
-    logger.info(f"Proxy: {request.method} -> {target_url}")
-    return await proxy_request(request, target_url=target_url)
+    ua_name = request.query_params.get("ua")
+    ua = _resolve_ua(ua_name) if ua_name else None
+
+    logger.info(f"Proxy: {request.method} -> {target_url} UA={ua_name or 'default'}")
+    return await proxy_request(request, target_url=target_url, user_agent=ua)
+
+
+def _resolve_ua(name: str) -> str | None:
+    path = os.path.join(os.path.dirname(__file__), "..", "user_agents.json")
+    try:
+        with open(path) as f:
+            uas = json.load(f)
+        return uas.get(name)
+    except Exception:
+        return None
 
 
 async def _check_ssrf(hostname: str):
