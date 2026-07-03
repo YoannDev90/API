@@ -100,6 +100,7 @@ async def screenshot(url: str = Query(..., description="Website URL")):
         url = "https://" + url
     try:
         from playwright.async_api import async_playwright
+        os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", os.path.join(os.path.dirname(__file__), "..", ".pw-browsers"))
         async with async_playwright() as pw:
             browser = await pw.chromium.launch()
             page = await browser.new_page(viewport={"width": 1280, "height": 720})

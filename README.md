@@ -79,4 +79,4 @@ Build command (with uv):
 uv sync --no-dev && playwright install chromium --with-deps
 ```
 
-Env vars: `PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/.cache/ms-playwright`
+Env vars: `PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/.pw-browsers`
