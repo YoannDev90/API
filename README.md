@@ -1,8 +1,8 @@
 # API Proxy
 
-[![CI](https://github.com/YoannDev90/API/actions/workflows/ci.yml/badge.svg)](https://github.com/YoannDev90/API/actions/workflows/ci.yml)
-[![server](https://img.shields.io/website?url=https%3A%2F%2Falphallm-api.onrender.com%2Fhealth&label=server)](https://alphallm-api.onrender.com/health)
-[![deploy](https://img.shields.io/badge/render-deployed-brightgreen?logo=render)](https://dashboard.render.com/web/srv-d1j28ap5pdvs73cn2usg)
+[![CI](https://img.shields.io/github/actions/workflow/status/YoannDev90/API/ci.yml?style=for-the-badge&logo=github&label=CI&branch=main)](https://github.com/YoannDev90/API/actions/workflows/ci.yml)
+[![server](https://img.shields.io/badge/dynamic/json?style=for-the-badge&url=https%3A%2F%2Falphallm-api.onrender.com%2Fhealth&query=%24.status&label=server&cacheSeconds=300)](https://alphallm-api.onrender.com/health)
+[![deploy](https://img.shields.io/badge/render-deployed?style=for-the-badge&logo=render&label=deploy)](https://dashboard.render.com/web/srv-d1j28ap5pdvs73cn2usg)
 
 Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for Render.
 
