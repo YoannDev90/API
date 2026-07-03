@@ -38,6 +38,10 @@ async def proxy_request(request, path: str = "", target_url: str = None):
                     "x-frame-options",
                     "content-security-policy",
                     "frame-options",
+                    "content-encoding",
+                    "transfer-encoding",
+                    "content-length",
+                    "alt-svc",
                 )
             }
             return Response(
