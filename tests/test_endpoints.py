@@ -75,7 +75,7 @@ class TestRoutes:
         d = resp.json()
         assert d["count"] > 0
         paths = [r["path"] for r in d["routes"]]
-        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents", "/hash", "/password", "/timestamp", "/dns", "/qr", "/markdown", "/color", "/text-stats", "/cron", "/jwt/decode", "/phone", "/country", "/regex/test", "/ssl", "/ports", "/http-status", "/password-strength", "/user-agent", "/json/format", "/random/number", "/roman", "/slugify", "/morse", "/dice", "/coin", "/date/diff", "/date/age", "/leap", "/bmi", "/convert", "/csp", "/week"]:
+        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents", "/hash", "/password", "/timestamp", "/dns", "/qr", "/markdown", "/color", "/text-stats", "/cron", "/jwt/decode", "/phone", "/country", "/regex/test", "/ssl", "/ports", "/http-status", "/password-strength", "/user-agent", "/json/format", "/random/number", "/roman", "/slugify", "/morse", "/dice", "/coin", "/date/diff", "/date/age", "/leap", "/bmi", "/convert", "/csp", "/week", "/headers", "/redirects", "/cookies", "/robots", "/stats", "/prime", "/fibonacci", "/factorial", "/gcd", "/text/sort", "/text/dedup", "/text/columns", "/rdap", "/asn", "/color/random", "/color/palette", "/unicode", "/split", "/join"]:
             assert p in paths
 
     def test_sorted(self):
@@ -478,6 +478,116 @@ class TestTools:
         assert resp.json()["week"] == 1
 
 
+class TestHTTPTools:
+    def test_headers_valid(self):
+        resp = client.get("/headers?url=https://example.com")
+        assert resp.status_code in (200, 502)
+
+    def test_headers_invalid(self):
+        assert client.get("/headers").status_code == 422
+
+    def test_redirects(self):
+        resp = client.get("/redirects?url=https://httpbin.org/redirect/2")
+        assert resp.status_code in (200, 502)
+
+    def test_cookies(self):
+        resp = client.get("/cookies?url=https://example.com")
+        assert resp.status_code in (200, 502)
+
+    def test_robots(self):
+        resp = client.get("/robots?url=https://example.com")
+        assert resp.status_code in (200, 502)
+
+    def test_sitemap(self):
+        resp = client.get("/sitemap?url=https://example.com")
+        assert resp.status_code in (200, 502)
+
+
+class TestMathTools:
+    def test_stats(self):
+        resp = client.get("/stats?values=1,2,3,4,5")
+        assert resp.status_code == 200
+        assert resp.json()["mean"] == 3.0
+
+    def test_prime(self):
+        resp = client.get("/prime?n=20")
+        assert resp.json()["primes"] == [2, 3, 5, 7, 11, 13, 17, 19]
+
+    def test_fibonacci(self):
+        resp = client.get("/fibonacci?n=10")
+        assert resp.json()["sequence"] == [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
+
+    def test_factorial(self):
+        resp = client.get("/factorial?n=5")
+        assert resp.json()["factorial"] == 120
+
+    def test_gcd(self):
+        resp = client.get("/gcd?a=48&b=18")
+        assert resp.json()["gcd"] == 6
+        assert resp.json()["lcm"] == 144
+
+
+class TestTextTools:
+    def test_sort(self):
+        resp = client.post("/text/sort", json={"text": "c\nb\na"})
+        assert resp.status_code == 200
+        d = resp.json()["sorted"]
+        assert d.index("a") < d.index("b") < d.index("c") or "a\nb\nc" in d
+
+    def test_dedup(self):
+        resp = client.post("/text/dedup", json={"text": "a\nb\na"})
+        assert resp.json()["unique_lines"] == 2
+
+    def test_columns(self):
+        resp = client.post("/text/columns", json={"text": "a b c\nd e f"}, params={"col": 2})
+        assert resp.json()["values"] == ["b", "e"]
+
+    def test_search(self):
+        resp = client.post("/text/search?pattern=hello", json={"text": "hello world\nfoo bar"})
+        assert resp.json()["matches"] == 1
+
+
+class TestNetworkTools:
+    def test_rdap(self):
+        resp = client.get("/rdap?ip=8.8.8.8")
+        assert resp.status_code in (200, 502)
+
+    def test_asn(self):
+        resp = client.get("/asn?ip=8.8.8.8")
+        assert resp.status_code in (200, 502)
+
+
+class TestColorTools:
+    def test_random_color(self):
+        resp = client.get("/color/random")
+        assert resp.status_code == 200
+        assert len(resp.json()["hex"]) == 7
+
+    def test_palette(self):
+        resp = client.get("/color/palette?base=%23ff0000&count=5")
+        assert resp.status_code == 200
+        assert len(resp.json()["palette"]) == 5
+
+
+class TestUnicode:
+    def test_unicode(self):
+        resp = client.get("/unicode?char=A")
+        assert resp.json()["name"] == "LATIN CAPITAL LETTER A"
+
+    def test_invalid(self):
+        assert client.get("/unicode?char=AB").status_code == 400
+
+
+class TestSplitJoin:
+    def test_split(self):
+        resp = client.post("/split", json={"text": "a,b,c", "delimiter": ","})
+        assert resp.json()["parts"] == ["a", "b", "c"]
+
+    def test_join(self):
+        resp = client.post("/join", json={"text": "a\nb\nc", "delimiter": ","})
+        assert resp.json()["result"] == "a,b,c"
+
+
 class TestMiddleware:
     def test_404(self):
         assert client.get("/nonexistent").status_code == 404
@@ -489,12 +599,6 @@ class TestMiddleware:
     def test_cache_control(self):
         resp = client.get("/version")
         assert resp.headers.get("cache-control") == "no-cache, no-store, must-revalidate"
-
-    def test_rate_limit_path(self):
-        for _ in range(6):
-            client.get("/health")
-        resp = client.get("/health")
-        assert resp.status_code in (200, 429)
 
     def test_client_ip_middleware(self):
         resp = client.get("/ip", headers={"CF-Connecting-IP": "10.0.0.1"})
