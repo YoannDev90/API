@@ -59,16 +59,17 @@ document.addEventListener("DOMContentLoaded",function(){
     var p="/proxy/"+encodeURIComponent(u);
     btn.textContent="...";
     if(debugMode){
-      dbg.innerHTML="<div class='y'>Fetching: "+u+"</div>";
+      dbg.innerHTML="<div class=y>Fetching: "+u+"</div>";
       fetch(p).then(function(r){
         var h="";
         r.headers.forEach(function(v,k){h+=k+": "+v+"\\n"});
         r.text().then(function(b){
-          dbg.innerHTML="<div class='b">Status: <span class='"+(r.ok?"r":"rr")+"'>"+r.status+" "+r.statusText+"</span></div><div class='y'>Headers:</div><pre>"+h+"</pre><div class='y'>Body (first 2KB):</div><pre>"+b.slice(0,2048)+"</pre>";
+          var s=r.ok?"r":"rr";
+          dbg.innerHTML="<div class=b>Status: <span class="+s+">"+r.status+" "+r.statusText+"</span></div><div class=y>Headers:</div><pre>"+h+"</pre><div class=y>Body (2KB):</div><pre>"+b.slice(0,2048)+"</pre>";
           btn.textContent="Go";
         });
-          }).catch(function(e){
-        dbg.innerHTML+="<div class='rr'>Fetch error: "+e.message+"</div>";
+      }).catch(function(e){
+        dbg.innerHTML+="<div class=rr>Fetch error: "+e.message+"</div>";
         btn.textContent="Go";
       });
     }
@@ -78,7 +79,7 @@ document.addEventListener("DOMContentLoaded",function(){
   url.addEventListener("keydown",function(e){if(e.key==="Enter")load()});
   f.addEventListener("load",function(){if(!debugMode)btn.textContent="Go"});
   f.addEventListener("error",function(){btn.textContent="Go"});
-  if(debugMode)dbg.innerHTML="<div class='y'>Debug mode active. Enter URL and click Go.</div>";
+  if(debugMode)dbg.innerHTML="<div class=y>Debug mode active. Enter URL and click Go.</div>";
 });
 </script>
 </body>
