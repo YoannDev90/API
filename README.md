@@ -63,8 +63,7 @@ uv run pytest tests/ -v
 |-----|----------|-------------|
 | `DATA_SERVICE_BASE_URL` | yes | Upstream API base URL |
 | `RENDER_EXTERNAL_URL` | no | Self-ping URL (Render only) |
-| `SCREENSHOT_API_URL` | no | Screenshot API URL |
-| `SCREENSHOT_API_KEY` | no | Screenshot API key |
+| `PLAYWRIGHT_BROWSERS_PATH` | no | Playwright browsers path |
 | `HOST` | no | Bind address (default `0.0.0.0`) |
 | `PORT` | no | Port (default `8000`) |
 
@@ -77,5 +76,7 @@ Set `RENDER_EXTERNAL_URL` env var. Server pings `/health` every 10 min to preven
 Build command (with uv):
 
 ```
-uv sync --no-dev
+uv sync --no-dev && playwright install chromium --with-deps
 ```
+
+Env vars: `PLAYWRIGHT_BROWSERS_PATH=/opt/render/project/src/.cache/ms-playwright`

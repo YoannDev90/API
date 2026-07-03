@@ -7,6 +7,7 @@ pydantic-settings
 python-whois
 deep-translator
 dnspython
+playwright
 
 # dev
 pytest

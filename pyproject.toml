@@ -12,6 +12,7 @@ dependencies = [
     "python-whois",
     "deep-translator",
     "dnspython",
+    "playwright",
 ]
 
 [project.optional-dependencies]

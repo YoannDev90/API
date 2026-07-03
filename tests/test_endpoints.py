@@ -153,9 +153,9 @@ class TestScreenshot:
         resp = client.get("/screenshot")
         assert resp.status_code == 422
 
-    def test_screenshot_not_configured(self):
-        resp = client.get("/screenshot?url=https://example.com")
-        assert resp.status_code == 501
+    def test_screenshot_invalid_url(self):
+        resp = client.get("/screenshot?url=not-a-valid-url-xyz-123456")
+        assert resp.status_code == 502
 
 
 class TestHash:

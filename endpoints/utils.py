@@ -96,18 +96,20 @@ async def translate(body: TranslateInput):
 
 @router.get("/screenshot", tags=["utils"])
 async def screenshot(url: str = Query(..., description="Website URL")):
-    api_url = os.getenv("SCREENSHOT_API_URL", "")
-    api_key = os.getenv("SCREENSHOT_API_KEY", "")
-    if api_url and api_key:
-        try:
-            async with httpx.AsyncClient(timeout=60) as client:
-                params = {"key": api_key, "url": url, "device": "desktop"}
-                target = api_url.replace("{url}", url) if "{url}" in api_url else api_url
-                resp = await client.get(target, params=params if "?" not in target else None)
-                return Response(content=resp.content, media_type=resp.headers.get("content-type", "image/png"))
-        except Exception as e:
-            raise HTTPException(status_code=502, detail=f"Screenshot failed: {e}")
-    raise HTTPException(status_code=501, detail="Set SCREENSHOT_API_URL and SCREENSHOT_API_KEY")
+    if not url.startswith(("http://", "https://")):
+        url = "https://" + url
+    try:
+        from playwright.async_api import async_playwright
+        async with async_playwright() as pw:
+            browser = await pw.chromium.launch()
+            page = await browser.new_page(viewport={"width": 1280, "height": 720})
+            await page.goto(url, wait_until="networkidle", timeout=30000)
+            png = await page.screenshot(type="png", full_page=False)
+            await browser.close()
+        return Response(content=png, media_type="image/png")
+    except Exception as e:
+        logger.error(f"Screenshot failed for {url}: {e}")
+        raise HTTPException(status_code=502, detail=f"Screenshot failed: {e}")
 
 
 class HashInput(BaseModel):
