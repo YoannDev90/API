@@ -22,13 +22,13 @@ async def proxy_request(request, path: str = "", target_url: str = None):
         if body:
             headers["content-type"] = "application/octet-stream"
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, max_redirects=10) as client:
             resp = await client.request(
                 method=request.method,
                 url=target_url,
                 headers=headers,
                 content=body,
-                follow_redirects=False,
+                follow_redirects=True,
             )
             proxied_headers = {
                 k: v
