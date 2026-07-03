@@ -1,5 +1,9 @@
 # API Proxy
 
+[![CI](https://github.com/YoannDev90/API/actions/workflows/ci.yml/badge.svg)](https://github.com/YoannDev90/API/actions/workflows/ci.yml)
+[![server](https://img.shields.io/website?url=https%3A%2F%2Falphallm-api.onrender.com%2Fhealth&label=server)](https://alphallm-api.onrender.com/health)
+[![deploy](https://img.shields.io/badge/render-deployed-brightgreen?logo=render)](https://dashboard.render.com/web/srv-d1j28ap5pdvs73cn2usg)
+
 Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for Render.
 
 ## Structure
