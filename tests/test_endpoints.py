@@ -75,7 +75,7 @@ class TestRoutes:
         d = resp.json()
         assert d["count"] > 0
         paths = [r["path"] for r in d["routes"]]
-        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents", "/hash", "/password", "/timestamp", "/dns"]:
+        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents", "/hash", "/password", "/timestamp", "/dns", "/qr", "/markdown", "/color", "/text-stats", "/cron", "/jwt/decode", "/phone", "/country", "/regex/test", "/ssl", "/ports", "/http-status", "/password-strength", "/user-agent"]:
             assert p in paths
 
     def test_sorted(self):
@@ -268,6 +268,154 @@ class TestUtils:
     def test_whois_empty_domain(self):
         resp = client.get("/whois?domain=")
         assert resp.status_code in (422, 502)
+
+
+class TestQR:
+    def test_qr(self):
+        resp = client.get("/qr?text=hello")
+        assert resp.status_code == 200
+        assert resp.headers["content-type"] == "image/png"
+
+    def test_qr_missing(self):
+        assert client.get("/qr").status_code == 422
+
+
+class TestMarkdown:
+    def test_markdown(self):
+        resp = client.post("/markdown", json={"text": "# Hello\n**bold**"})
+        assert resp.status_code == 200
+        assert "<h1>" in resp.json()["html"]
+        assert "<strong>" in resp.json()["html"]
+
+
+class TestColor:
+    def test_hex(self):
+        resp = client.post("/color", json={"value": "#ff0000"})
+        assert resp.status_code == 200
+        d = resp.json()
+        assert d["hex"] == "#ff0000"
+        assert d["rgb"]["r"] == 255
+
+    def test_rgb(self):
+        resp = client.post("/color", json={"value": "rgb(0,255,0)"})
+        assert resp.status_code == 200
+        assert resp.json()["hex"] == "#00ff00"
+
+    def test_invalid(self):
+        assert client.post("/color", json={"value": "invalid"}).status_code == 400
+
+
+class TestTextStats:
+    def test_stats(self):
+        resp = client.get("/text-stats?text=hello+world")
+        assert resp.status_code == 200
+        assert resp.json()["words"] == 2
+        assert resp.json()["characters"] == 11
+
+
+class TestCron:
+    def test_cron(self):
+        resp = client.get("/cron?expr=*/5+*+*+*+*")
+        assert resp.status_code == 200
+        assert len(resp.json()["next_5_runs"]) == 5
+
+    def test_invalid(self):
+        assert client.get("/cron?expr=invalid").status_code == 400
+
+
+class TestJWT:
+    def test_decode(self):
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+        resp = client.post("/jwt/decode", json={"token": token})
+        assert resp.status_code == 200
+        assert resp.json()["payload"]["sub"] == "1234567890"
+
+
+class TestPhone:
+    def test_phone(self):
+        resp = client.get("/phone?number=%2B33612345678")
+        assert resp.status_code == 200
+        assert "France" in resp.json()["country"]
+
+    def test_invalid(self):
+        assert client.get("/phone?number=123").status_code == 400
+
+
+class TestCountry:
+    def test_fr(self):
+        resp = client.get("/country?code=FR")
+        assert resp.status_code == 200
+        assert resp.json()["name"] == "France"
+
+    def test_invalid(self):
+        assert client.get("/country?code=ZZ").status_code == 404
+
+
+class TestRegex:
+    def test_match(self):
+        resp = client.post("/regex/test", json={"pattern": "\\d+", "text": "abc123def456"})
+        assert resp.status_code == 200
+        assert resp.json()["match_count"] > 0
+
+    def test_no_match(self):
+        resp = client.post("/regex/test", json={"pattern": r"xyz", "text": "abcdef"})
+        assert resp.status_code == 200
+        assert not resp.json()["matched"]
+
+
+class TestSSL:
+    def test_ssl(self):
+        resp = client.get("/ssl?domain=example.com")
+        assert resp.status_code == 200
+        assert "days_left" in resp.json()
+
+    def test_invalid(self):
+        assert client.get("/ssl?domain=invalid-domain-xyz-123.com").status_code == 502
+
+
+class TestPorts:
+    def test_scan(self):
+        resp = client.get("/ports?host=example.com&ports=443")
+        d = resp.json()
+        assert "open_ports" in d
+        assert d["total_scanned"] == 1
+
+
+class TestHTTPStatus:
+    def test_200(self):
+        resp = client.get("/http-status?code=200")
+        assert resp.json()["name"] == "OK"
+
+    def test_404(self):
+        resp = client.get("/http-status?code=404")
+        assert resp.json()["name"] == "Not Found"
+
+    def test_418(self):
+        resp = client.get("/http-status?code=418")
+        assert resp.json()["name"] == "I'm a Teapot"
+
+
+class TestPasswordStrength:
+    def test_weak(self):
+        resp = client.get("/password-strength?password=123456")
+        assert resp.status_code == 200
+        assert "score" in resp.json()
+
+    def test_strong(self):
+        resp = client.get("/password-strength?password=f9kL%232mN%248xP%21qR7")
+        assert resp.status_code == 200
+
+
+class TestUserAgent:
+    def test_chrome(self):
+        resp = client.get("/user-agent?ua=" + "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128.0.0.0 Safari/537.36")
+        assert resp.status_code == 200
+        d = resp.json()
+        assert "Chrome" in d["browser"]["family"]
+
+    def test_bot(self):
+        resp = client.get("/user-agent?ua=Googlebot/2.1")
+        assert resp.json()["is_bot"]
 
 
 class TestMiddleware:

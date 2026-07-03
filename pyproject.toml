@@ -14,6 +14,14 @@ dependencies = [
     "dnspython",
     "playwright",
     "cloudscraper",
+    "qrcode[pil]",
+    "markdown",
+    "croniter",
+    "pyjwt",
+    "phonenumbers",
+    "pycountry",
+    "zxcvbn",
+    "user-agents",
 ]
 
 [project.optional-dependencies]
