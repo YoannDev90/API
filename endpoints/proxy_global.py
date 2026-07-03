@@ -33,7 +33,7 @@ iframe{width:100%;height:calc(100vh - 52px);border:none;background:#fff}
 <input id="url" type="text" placeholder="Enter URL (e.g. https://example.com)" autofocus>
 <button id="goBtn">Go</button>
 </div>
-<iframe id="frame"></iframe>
+<iframe id="frame" sandbox="allow-scripts allow-forms allow-popups"></iframe>
 <script>
 document.addEventListener("DOMContentLoaded",function(){
   var url=document.getElementById("url"),btn=document.getElementById("goBtn"),f=document.getElementById("frame");
