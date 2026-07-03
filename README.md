@@ -22,9 +22,7 @@ Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for R
 │   ├── list_routes.py       # GET /routes
 │   ├── proxy_custom.py      # POST /proxy
 │   ├── proxy_global.py      # /proxy/{path:path}
-│   ├── api_status.py        # GET /api/status
 │   ├── api_docs.py          # GET /api/docs
-│   ├── api_resources.py     # GET /api/resources (SSE)
 │   └── api_catchall.py      # /api/{path:path} (catch-all, loaded last)
 └── requirements.txt
 ```

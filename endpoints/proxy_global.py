@@ -3,11 +3,11 @@ import urllib.parse
 from logging import getLogger
 
 from fastapi import APIRouter, HTTPException, Request
-from proxy import proxy_general
+from proxy import proxy_request
 from config import config
 
 router = APIRouter()
-logger = getLogger("api")
+logger = getLogger("api-proxy")
 
 
 @router.api_route(
@@ -16,9 +16,7 @@ logger = getLogger("api")
     tags=["global-proxy"],
 )
 async def catch_all_proxy(request: Request, path: str):
-    client_ip = request.scope.get(
-        "client_ip", request.client.host if request.client else "unknown"
-    )
+    client_ip = request.scope.get("client_ip", "unknown")
 
     target_url = None
     for decoder in [
@@ -29,7 +27,7 @@ async def catch_all_proxy(request: Request, path: str):
         try:
             target_url = decoder(path)
             break
-        except Exception:
+        except (ValueError, Exception):
             continue
 
     if not target_url and path.startswith(("http://", "https://")):
@@ -38,11 +36,11 @@ async def catch_all_proxy(request: Request, path: str):
     if not target_url:
         raise HTTPException(status_code=400, detail="Invalid encoded URL")
 
-    blocked = ["localhost", "127.0.0.1", "0.0.0.0"]
+    blocked = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]
     if any(b in target_url for b in blocked):
         raise HTTPException(status_code=403, detail="Forbidden")
-    if config.data.base_url and target_url.startswith(config.data.base_url):
+    if config.base_url and target_url.startswith(config.base_url):
         raise HTTPException(status_code=403, detail="Forbidden")
 
     logger.info(f"Global proxy: {request.method} -> {target_url} from {client_ip}")
-    return await proxy_general(target_url, request)
+    return await proxy_request(request, target_url=target_url)

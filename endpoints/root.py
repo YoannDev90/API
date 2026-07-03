@@ -1,18 +1,15 @@
 from fastapi import APIRouter, Request
-from logging import getLogger
+from __init__ import __version__
 
 router = APIRouter()
-logger = getLogger("api")
 
 
 @router.get("/", tags=["general"])
 async def read_root(request: Request):
-    client_ip = request.scope.get(
-        "client_ip", request.client.host if request.client else "unknown"
-    )
+    client_ip = request.scope.get("client_ip", "unknown")
     return {
         "code": "200",
         "message": "API Proxy",
-        "version": "2.0.0",
+        "version": __version__,
         "client_ip": client_ip,
     }

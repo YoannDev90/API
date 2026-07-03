@@ -5,7 +5,7 @@ from config import allowed_proxy_paths
 from proxy import proxy_request
 
 router = APIRouter()
-logger = getLogger("api")
+logger = getLogger("api-proxy")
 
 
 @router.api_route(
@@ -24,8 +24,4 @@ async def api_proxy_catch_all(request: Request, path: str):
     if not any(request_path.startswith(allowed) for allowed in allowed_proxy_paths):
         raise HTTPException(status_code=404, detail="Not Found")
 
-    response = await proxy_request(request, path)
-    if response.status_code == 404:
-        raise HTTPException(status_code=404, detail="Path not found in internal API")
-
-    return response
+    return await proxy_request(request, path)

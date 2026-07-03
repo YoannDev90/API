@@ -9,7 +9,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 router = APIRouter()
-logger = getLogger("api")
+logger = getLogger("api-proxy")
 
 
 class ProxyRequest(BaseModel):
@@ -23,36 +23,16 @@ class ProxyRequest(BaseModel):
 
 @router.post("/proxy", tags=["proxy"])
 async def custom_proxy(proxy_req: ProxyRequest, request: Request):
-    client_ip = request.scope.get(
-        "client_ip", request.client.host if request.client else "unknown"
-    )
+    client_ip = request.scope.get("client_ip", "unknown")
     logger.info(f"Custom proxy: {proxy_req.method} {proxy_req.url} from {client_ip}")
 
     if not proxy_req.url.startswith(("http://", "https://")):
-        return Response("URL must start with http:// or https://", status_code=400)
+        raise HTTPException(
+            status_code=400, detail="URL must start with http:// or https://"
+        )
 
-    # SSRF protection
-    try:
-        hostname = proxy_req.url.split("://")[1].split("/")[0].split(":")[0]
-        try:
-            ip = ipaddress.ip_address(hostname)
-            if ip.is_private or ip.is_loopback:
-                return Response(
-                    "Access to private/local IPs not allowed", status_code=403
-                )
-        except ValueError:
-            try:
-                resolved = socket.gethostbyname(hostname)
-                ip = ipaddress.ip_address(resolved)
-                if ip.is_private or ip.is_loopback:
-                    raise HTTPException(
-                        status_code=403,
-                        detail="Access to private/local IPs not allowed",
-                    )
-            except socket.gaierror:
-                pass
-    except Exception:
-        pass
+    hostname = proxy_req.url.split("://")[1].split("/")[0].split(":")[0]
+    await _check_ssrf(hostname)
 
     try:
         data = proxy_req.json_data or proxy_req.data
@@ -78,3 +58,27 @@ async def custom_proxy(proxy_req: ProxyRequest, request: Request):
     except Exception as e:
         logger.error(f"Proxy error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+async def _check_ssrf(hostname: str):
+    try:
+        ip = ipaddress.ip_address(hostname)
+    except ValueError:
+        ip = None
+
+    if ip is not None:
+        if ip.is_private or ip.is_loopback:
+            raise HTTPException(
+                status_code=403, detail="Access to private/local IPs not allowed"
+            )
+        return
+
+    try:
+        resolved_ip = socket.gethostbyname(hostname)
+        ip = ipaddress.ip_address(resolved_ip)
+        if ip.is_private or ip.is_loopback:
+            raise HTTPException(
+                status_code=403, detail="Access to private/local IPs not allowed"
+            )
+    except socket.gaierror:
+        raise HTTPException(status_code=400, detail="Hostname could not be resolved")

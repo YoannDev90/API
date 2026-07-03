@@ -6,7 +6,7 @@ import os
 
 import httpx
 
-logger = logging.getLogger("keep-alive")
+logger = logging.getLogger("api-proxy.keep_alive")
 
 RENDER_URL = os.getenv("RENDER_EXTERNAL_URL", "")
 

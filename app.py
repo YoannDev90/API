@@ -9,12 +9,12 @@ from time import time
 import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 from config import config, allowed_proxy_paths
 from keep_alive import start_self_ping
+from __init__ import __version__
 
 logger = logging.getLogger("api-proxy")
 
@@ -40,7 +40,6 @@ def load_endpoints(app: FastAPI):
         except Exception as e:
             logger.error(f"Failed to load {module_name}: {e}")
 
-    # Load catch-all last so specific routes match first
     try:
         module = importlib.import_module("endpoints.api_catchall")
         if hasattr(module, "router"):
@@ -53,7 +52,7 @@ def load_endpoints(app: FastAPI):
 async def load_allowed_paths(app: FastAPI):
     logger.info("Loading allowed paths from upstream...")
     try:
-        schema_url = f"{config.data.base_url.rstrip('/')}/openapi.json"
+        schema_url = f"{config.base_url.rstrip('/')}/openapi.json"
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.get(schema_url)
         if resp.status_code == 200:
@@ -100,22 +99,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.history = defaultdict(list)
         self.lock = asyncio.Lock()
 
-    @staticmethod
-    def _limits(path: str):
-        return (1, 1.0) if path == "/resources" else (5, 1.0)
+    _MAX_REQ = 5
+    _WINDOW = 1.0
 
     async def dispatch(self, request, call_next):
-        client_ip = request.scope.get(
-            "client_ip", request.client.host if request.client else "unknown"
-        )
+        client_ip = request.scope.get("client_ip", "unknown")
         path = request.url.path
-        max_req, window = self._limits(path)
+        max_req, window = self._MAX_REQ, self._WINDOW
         key = f"{client_ip}:{path}"
 
         async with self.lock:
             cutoff = time() - window
-            self.history[key] = [t for t in self.history[key] if t > cutoff]
-            if len(self.history[key]) >= max_req:
+            recent = [t for t in self.history[key] if t > cutoff]
+            if len(recent) >= max_req:
                 return JSONResponse(
                     status_code=429,
                     content={
@@ -124,7 +120,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     },
                     headers={"Retry-After": str(int(window))},
                 )
-            self.history[key].append(time())
+            recent.append(time())
+            self.history[key] = recent
 
         return await call_next(request)
 
@@ -142,7 +139,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="API Proxy",
         description="API Proxy",
-        version="2.0.0",
+        version=__version__,
         docs_url="/docs",
         redoc_url="/redoc",
         openapi_url="/openapi.json",
@@ -152,7 +149,6 @@ def create_app() -> FastAPI:
     app.add_middleware(CacheControlMiddleware)
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(ClientIPMiddleware)
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
