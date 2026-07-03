@@ -1,3 +1,4 @@
+import os
 import platform
 import sys
 import time
@@ -64,5 +65,6 @@ async def debug_headers(request: Request):
             "python": sys.version.split()[0],
             "platform": platform.system(),
             "platform_release": platform.release(),
+            "cpu_count": os.cpu_count(),
         },
     }
