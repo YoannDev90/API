@@ -485,3 +485,249 @@ async def user_agent_parse(ua: str = Query(..., description="User-Agent string")
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"UA parse failed: {e}")
 
+
+@router.get("/lorem", tags=["utils"])
+async def lorem_ipsum(paragraphs: int = Query(default=3, ge=1, le=50),
+                      words_per: int = Query(default=50, ge=5, le=500)):
+    import random
+    lorem = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt in culpa qui officia deserunt mollit anim id est laborum"
+    words = lorem.split()
+    paras = []
+    for _ in range(paragraphs):
+        start = random.randint(0, len(words) - 1)
+        para = " ".join(words[(start + i) % len(words)] for i in range(words_per))
+        paras.append(para[0].upper() + para[1:] + ".")
+    return {"code": "200", "paragraphs": paras}
+
+
+@router.get("/uuid/decode", tags=["utils"])
+async def uuid_decode(uuid_str: str = Query(..., description="UUID v1 or v7 to decode")):
+    try:
+        u = uuid.UUID(uuid_str)
+        info = {"uuid": str(u), "version": u.version, "variant": str(u.variant)}
+        if u.version == 1:
+            info["timestamp"] = datetime.datetime.fromtimestamp((u.time - 0x01b21dd213814000) / 1e7, tz=datetime.timezone.utc).isoformat()
+            info["clock_seq"] = u.clock_seq
+            info["node"] = ":".join(f"{u.node >> (8*i) & 0xff:02x}" for i in range(6))
+        elif u.version == 7:
+            ts = (u.time >> 80) / 1000
+            info["timestamp"] = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).isoformat()
+        return {"code": "200", "info": info}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid UUID: {e}")
+
+
+class DiffInput(BaseModel):
+    text_a: str = Field(..., description="First text")
+    text_b: str = Field(..., description="Second text")
+
+
+@router.post("/diff", tags=["utils"])
+async def text_diff(body: DiffInput):
+    import difflib
+    lines_a = body.text_a.splitlines(keepends=True)
+    lines_b = body.text_b.splitlines(keepends=True)
+    diff = list(difflib.unified_diff(lines_a, lines_b, n=3))
+    added = sum(1 for l in diff if l.startswith("+") and not l.startswith("+++"))
+    removed = sum(1 for l in diff if l.startswith("-") and not l.startswith("---"))
+    return {"code": "200", "diff": diff, "added_lines": added, "removed_lines": removed, "changed": bool(diff)}
+
+
+class HTMLEncodeInput(BaseModel):
+    text: str = Field(..., description="Text to encode/decode")
+
+
+@router.post("/html/encode", tags=["utils"])
+async def html_encode(body: HTMLEncodeInput):
+    import html
+    return {"code": "200", "original": body.text, "encoded": html.escape(body.text)}
+
+
+@router.post("/html/decode", tags=["utils"])
+async def html_decode(body: HTMLEncodeInput):
+    import html
+    return {"code": "200", "original": body.text, "decoded": html.unescape(body.text)}
+
+
+class URLEncodeInput(BaseModel):
+    text: str = Field(..., description="Text to encode/decode")
+
+
+@router.post("/url/encode", tags=["utils"])
+async def url_encode(body: URLEncodeInput):
+    return {"code": "200", "original": body.text, "encoded": urllib.parse.quote(body.text)}
+
+
+@router.post("/url/decode", tags=["utils"])
+async def url_decode(body: URLEncodeInput):
+    return {"code": "200", "original": body.text, "decoded": urllib.parse.unquote(body.text)}
+
+
+class CaseInput(BaseModel):
+    text: str = Field(..., description="Text to convert")
+
+
+@router.post("/case", tags=["utils"])
+async def case_convert(body: CaseInput):
+    import re
+    t = body.text
+    words = re.findall(r"[A-Za-z0-9]+", t)
+    return {
+        "code": "200",
+        "original": t,
+        "upper": t.upper(),
+        "lower": t.lower(),
+        "title": t.title(),
+        "camel": words[0].lower() + "".join(w.capitalize() for w in words[1:]),
+        "snake": "_".join(w.lower() for w in words),
+        "kebab": "-".join(w.lower() for w in words),
+        "pascal": "".join(w.capitalize() for w in words),
+    }
+
+
+@router.get("/ip-calc", tags=["utils"])
+async def ip_calc(cidr: str = Query(..., description="CIDR notation (e.g. 192.168.1.0/24)")):
+    try:
+        import ipaddress
+        net = ipaddress.ip_network(cidr, strict=False)
+        hosts = list(net.hosts())
+        return {
+            "code": "200",
+            "network": str(net.network_address),
+            "netmask": str(net.netmask),
+            "wildcard": str(net.hostmask),
+            "broadcast": str(net.broadcast_address),
+            "num_addresses": net.num_addresses,
+            "num_hosts": max(0, net.num_addresses - 2),
+            "first_host": str(hosts[0]) if hosts else None,
+            "last_host": str(hosts[-1]) if hosts else None,
+            "cidr": str(net.prefixlen),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid CIDR: {e}")
+
+
+@router.get("/email/validate", tags=["utils"])
+async def email_validate(email: str = Query(..., description="Email address")):
+    import re
+    pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+    valid_format = bool(re.match(pattern, email))
+    mx = None
+    if valid_format:
+        domain = email.split("@")[1]
+        try:
+            mx_records = dns.resolver.resolve(domain, "MX")
+            mx = [str(r.exchange) for r in mx_records]
+        except Exception:
+            mx = None
+    return {
+        "code": "200",
+        "email": email,
+        "valid_format": valid_format,
+        "mx_records": mx,
+    }
+
+
+@router.post("/json/to-yaml", tags=["utils"])
+async def json_to_yaml(body: dict):
+    try:
+        import yaml
+        return Response(content=yaml.dump(body, allow_unicode=True, default_flow_style=False), media_type="text/yaml; charset=utf-8")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Conversion failed: {e}")
+
+
+@router.get("/bases", tags=["utils"])
+async def number_bases(value: str = Query(..., description="Number to convert"),
+                       base: int = Query(default=10, ge=2, le=36, description="Input base")):
+    try:
+        dec = int(value, base)
+        return {
+            "code": "200",
+            "decimal": dec,
+            "binary": bin(dec),
+            "octal": oct(dec),
+            "hex": hex(dec),
+            "ascii": chr(dec) if 32 <= dec <= 126 else None,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Conversion failed: {e}")
+
+
+@router.get("/temperature", tags=["utils"])
+async def temperature(value: float = Query(..., description="Temperature value"),
+                       unit: str = Query(default="celsius", description="Input unit: celsius, fahrenheit, kelvin")):
+    u = unit.lower()
+    if u in ("c", "celsius"):
+        c, f, k = value, value * 9/5 + 32, value + 273.15
+    elif u in ("f", "fahrenheit"):
+        c, f, k = (value - 32) * 5/9, value, (value - 32) * 5/9 + 273.15
+    elif u in ("k", "kelvin"):
+        c, f, k = value - 273.15, (value - 273.15) * 9/5 + 32, value
+    else:
+        raise HTTPException(status_code=400, detail="Invalid unit. Use: celsius, fahrenheit, kelvin")
+    return {"code": "200", "celsius": round(c, 2), "fahrenheit": round(f, 2), "kelvin": round(k, 2)}
+
+
+@router.get("/timezone", tags=["utils"])
+async def timezone_convert(time: str = Query(..., description="Time (HH:MM)"),
+                           from_tz: str = Query(default="UTC", description="Source timezone"),
+                           to_tz: str = Query(default="Europe/Paris", description="Target timezone")):
+    try:
+        from zoneinfo import ZoneInfo
+        t = datetime.datetime.now(ZoneInfo(from_tz))
+        parts = time.split(":")
+        t = t.replace(hour=int(parts[0]), minute=int(parts[1]), second=0, microsecond=0)
+        converted = t.astimezone(ZoneInfo(to_tz))
+        return {
+            "code": "200",
+            "from": {"timezone": from_tz, "time": t.strftime("%H:%M"), "date": t.strftime("%Y-%m-%d")},
+            "to": {"timezone": to_tz, "time": converted.strftime("%H:%M"), "date": converted.strftime("%Y-%m-%d")},
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Timezone error: {e}")
+
+
+class CSVInput(BaseModel):
+    data: str = Field(..., description="CSV content")
+
+
+class BcryptInput(BaseModel):
+    password: str = Field(..., description="Password to hash")
+    verify: str = Field(default=None, description="Hash to verify against")
+
+
+@router.post("/bcrypt", tags=["utils"])
+async def bcrypt_hash(body: BcryptInput):
+    try:
+        import bcrypt as bc
+        if body.verify:
+            result = bc.checkpw(body.password.encode(), body.verify.encode())
+            return {"code": "200", "match": result}
+        else:
+            hashed = bc.hashpw(body.password.encode(), bc.gensalt())
+            return {"code": "200", "hash": hashed.decode()}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Bcrypt error: {e}")
+
+
+@router.post("/csv/to-json", tags=["utils"])
+async def csv_to_json(body: CSVInput):
+    try:
+        import csv, io
+        reader = csv.DictReader(io.StringIO(body.data))
+        rows = [row for row in reader]
+        return {"code": "200", "rows": rows, "count": len(rows), "columns": reader.fieldnames}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"CSV error: {e}")
+
+
+@router.get("/mime", tags=["utils"])
+async def mime_lookup(ext: str = Query(..., description="File extension (e.g. pdf, jpg, html)")):
+    import mimetypes
+    mime = mimetypes.guess_type(f"file.{ext.lstrip('.')}")[0]
+    if not mime:
+        raise HTTPException(status_code=404, detail="Unknown extension")
+    return {"code": "200", "extension": ext, "mime_type": mime}
+
+

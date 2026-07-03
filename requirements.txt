@@ -9,6 +9,16 @@ deep-translator
 dnspython
 playwright
 cloudscraper
+qrcode[pil]
+markdown
+croniter
+pyjwt
+phonenumbers
+pycountry
+zxcvbn
+user-agents
+bcrypt
+pyyaml
 
 # dev
 pytest
