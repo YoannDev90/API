@@ -21,6 +21,49 @@ class ProxyRequest(BaseModel):
     timeout: Optional[int] = Field(default=30, ge=1, le=300)
 
 
+PROXY_UI = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proxy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#111;color:#eee}
+.top{background:#1a1a2e;padding:10px 16px;display:flex;gap:10px;align-items:center;position:sticky;top:0;z-index:99}
+.top input{flex:1;padding:8px 12px;border:1px solid #333;border-radius:6px;background:#222;color:#eee;font-size:14px}
+.top input:focus{outline:none;border-color:#22c55e}
+.top button{padding:8px 20px;background:#22c55e;color:#000;border:none;border-radius:6px;font-weight:600;cursor:pointer}
+.top button:hover{background:#16a34a}
+iframe{width:100%;height:calc(100vh - 52px);border:none;background:#fff}
+.hint{padding:40px;text-align:center;color:#666;font-size:18px}
+</style>
+</head>
+<body>
+<div class="top">
+<input id="url" type="text" placeholder="Enter URL (e.g. https://example.com)" autofocus>
+<button onclick="go()">Go</button>
+</div>
+<iframe id="frame" srcdoc='<div class="hint">Enter a URL and click Go</div>'></iframe>
+<script>
+function b64url(s){return btoa(s).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'')}
+function go(){
+  var u=document.getElementById("url").value.trim();
+  if(!u)return;
+  if(!u.startsWith("http://")&&!u.startsWith("https://"))u="https://"+u;
+  document.getElementById("frame").src="/proxy/"+b64url(u);
+}
+document.getElementById("url").addEventListener("keydown",function(e){if(e.key==="Enter")go()});
+</script>
+</body>
+</html>"""
+
+
+@router.get("/proxy", tags=["proxy"])
+async def proxy_ui():
+    return Response(content=PROXY_UI, media_type="text/html")
+
+
 @router.post("/proxy", tags=["proxy"])
 async def custom_proxy(proxy_req: ProxyRequest, request: Request):
     client_ip = request.scope.get("client_ip", "unknown")
