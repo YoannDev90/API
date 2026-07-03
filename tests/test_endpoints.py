@@ -115,6 +115,15 @@ def test_rate_limiting():
     assert resp.status_code in (200, 429)
 
 
+def test_proxy_ui():
+    resp = client.get("/proxy")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "text/html; charset=utf-8"
+    assert "Go" in resp.text
+    assert "iframe" in resp.text
+    assert "DOMContentLoaded" in resp.text
+
+
 def test_cors_headers():
     resp = client.options("/ping", headers={"Origin": "https://example.com"})
     assert "access-control-allow-origin" in resp.headers

@@ -42,17 +42,24 @@ iframe{width:100%;height:calc(100vh - 52px);border:none;background:#fff}
 <body>
 <div class="top">
 <input id="url" type="text" placeholder="Enter URL (e.g. https://example.com)" autofocus>
-<button onclick="go()">Go</button>
+<button id="goBtn">Go</button>
 </div>
-<iframe id="frame" srcdoc='<div class="hint">Enter a URL and click Go</div>'></iframe>
+<iframe id="frame"></iframe>
 <script>
-function go(){
-  var u=document.getElementById("url").value.trim();
-  if(!u)return;
-  if(!u.startsWith("http://")&&!u.startsWith("https://"))u="https://"+u;
-  document.getElementById("frame").src="/proxy/"+encodeURIComponent(u);
-}
-document.getElementById("url").addEventListener("keydown",function(e){if(e.key==="Enter")go()});
+document.addEventListener("DOMContentLoaded",function(){
+  var url=document.getElementById("url"),btn=document.getElementById("goBtn"),f=document.getElementById("frame");
+  function load(){
+    var u=url.value.trim();
+    if(!u)return;
+    if(!u.startsWith("http://")&&!u.startsWith("https://"))u="https://"+u;
+    btn.textContent="...";
+    f.src="/proxy/"+encodeURIComponent(u);
+  }
+  btn.addEventListener("click",load);
+  url.addEventListener("keydown",function(e){if(e.key==="Enter")load()});
+  f.addEventListener("load",function(){btn.textContent="Go"});
+  f.addEventListener("error",function(){btn.textContent="Go"});
+});
 </script>
 </body>
 </html>"""

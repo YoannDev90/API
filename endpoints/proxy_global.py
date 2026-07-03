@@ -19,9 +19,10 @@ async def catch_all_proxy(request: Request, path: str):
 
     target_url = urllib.parse.unquote(path)
     if not target_url.startswith(("http://", "https://")):
-        target_url = None
+        raise HTTPException(status_code=400, detail="Invalid URL")
 
     blocked = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]
+    # check each blocked string individually instead of iterating through None
     if any(b in target_url for b in blocked):
         raise HTTPException(status_code=403, detail="Forbidden")
     if config.base_url and target_url.startswith(config.base_url):
