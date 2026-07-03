@@ -46,12 +46,11 @@ iframe{width:100%;height:calc(100vh - 52px);border:none;background:#fff}
 </div>
 <iframe id="frame" srcdoc='<div class="hint">Enter a URL and click Go</div>'></iframe>
 <script>
-function b64url(s){return btoa(s).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'')}
 function go(){
   var u=document.getElementById("url").value.trim();
   if(!u)return;
   if(!u.startsWith("http://")&&!u.startsWith("https://"))u="https://"+u;
-  document.getElementById("frame").src="/proxy/"+b64url(u);
+  document.getElementById("frame").src="/proxy/"+encodeURIComponent(u);
 }
 document.getElementById("url").addEventListener("keydown",function(e){if(e.key==="Enter")go()});
 </script>

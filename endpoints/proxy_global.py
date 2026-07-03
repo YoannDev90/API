@@ -1,4 +1,3 @@
-import base64
 import urllib.parse
 from logging import getLogger
 
@@ -18,23 +17,9 @@ logger = getLogger("api-proxy")
 async def catch_all_proxy(request: Request, path: str):
     client_ip = request.scope.get("client_ip", "unknown")
 
-    target_url = None
-    for decoder in [
-        lambda p: base64.urlsafe_b64decode(p).decode(),
-        lambda p: base64.b64decode(p).decode(),
-        lambda p: urllib.parse.unquote(p),
-    ]:
-        try:
-            target_url = decoder(path)
-            break
-        except (ValueError, Exception):
-            continue
-
-    if not target_url and path.startswith(("http://", "https://")):
-        target_url = path
-
-    if not target_url:
-        raise HTTPException(status_code=400, detail="Invalid encoded URL")
+    target_url = urllib.parse.unquote(path)
+    if not target_url.startswith(("http://", "https://")):
+        target_url = None
 
     blocked = ["localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"]
     if any(b in target_url for b in blocked):
