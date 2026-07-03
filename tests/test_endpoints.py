@@ -75,7 +75,7 @@ class TestRoutes:
         d = resp.json()
         assert d["count"] > 0
         paths = [r["path"] for r in d["routes"]]
-        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents", "/hash", "/password", "/timestamp", "/dns", "/qr", "/markdown", "/color", "/text-stats", "/cron", "/jwt/decode", "/phone", "/country", "/regex/test", "/ssl", "/ports", "/http-status", "/password-strength", "/user-agent"]:
+        for p in ["/", "/health", "/proxy", "/routes", "/uuid", "/whois", "/translate", "/screenshot", "/user-agents", "/hash", "/password", "/timestamp", "/dns", "/qr", "/markdown", "/color", "/text-stats", "/cron", "/jwt/decode", "/phone", "/country", "/regex/test", "/ssl", "/ports", "/http-status", "/password-strength", "/user-agent", "/json/format", "/random/number", "/roman", "/slugify", "/morse", "/dice", "/coin", "/date/diff", "/date/age", "/leap", "/bmi", "/convert", "/csp", "/week"]:
             assert p in paths
 
     def test_sorted(self):
@@ -416,6 +416,66 @@ class TestUserAgent:
     def test_bot(self):
         resp = client.get("/user-agent?ua=Googlebot/2.1")
         assert resp.json()["is_bot"]
+
+
+class TestTools:
+    def test_json_format(self):
+        resp = client.post("/json/format", json={"data": '{"a":1,"b":2}'})
+        assert resp.status_code == 200
+        assert resp.headers["content-type"] == "application/json"
+
+    def test_random_number(self):
+        resp = client.get("/random/number?min=1&max=10&count=5")
+        assert resp.status_code == 200
+        assert len(resp.json()["numbers"]) == 5
+
+    def test_roman(self):
+        resp = client.get("/roman?value=2024")
+        assert resp.status_code == 200
+        assert resp.json()["roman"] == "MMXXIV"
+
+    def test_slugify(self):
+        resp = client.get("/slugify?text=Hello+World!")
+        assert resp.json()["slug"] == "hello-world"
+
+    def test_morse(self):
+        resp = client.get("/morse?text=SOS")
+        assert resp.status_code == 200
+        assert "..." in resp.json()["output"]
+
+    def test_dice(self):
+        resp = client.get("/dice?roll=2d6")
+        assert resp.status_code == 200
+        assert len(resp.json()["rolls"]) == 2
+
+    def test_coin(self):
+        resp = client.get("/coin?count=3")
+        assert len(resp.json()["results"]) == 3
+
+    def test_date_diff(self):
+        resp = client.get("/date/diff?start=2024-01-01&end=2024-12-31")
+        assert resp.json()["days"] == 365
+
+    def test_leap(self):
+        assert client.get("/leap?year=2024").json()["leap"] is True
+        assert client.get("/leap?year=2023").json()["leap"] is False
+
+    def test_bmi(self):
+        resp = client.get("/bmi?weight=70&height=175")
+        assert round(resp.json()["bmi"], 1) == 22.9
+
+    def test_convert(self):
+        resp = client.get("/convert?value=10&from=km&to=mi")
+        assert abs(resp.json()["result"] - 6.2137) < 0.001
+
+    def test_csp(self):
+        resp = client.get("/csp")
+        assert resp.status_code == 200
+        assert "default-src" in resp.json()["csp"]
+
+    def test_week(self):
+        resp = client.get("/week?date=2024-01-01")
+        assert resp.json()["week"] == 1
 
 
 class TestMiddleware:
