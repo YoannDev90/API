@@ -9,24 +9,25 @@ Proxy API with dynamic endpoint loading, rate limiting, and self-keepalive for R
 ## Structure
 
 ```
-├── app.py              # FastAPI app, middleware, dynamic endpoint loader
-├── main.py             # Entry point (uvicorn)
-├── config.py           # Configuration from env vars
-├── proxy.py            # Proxy logic (internal + general)
-├── keep_alive.py       # Self-ping to prevent Render sleep
-├── endpoints/          # One file per endpoint, loaded dynamically
-│   ├── root.py              # GET /
-│   ├── health.py            # GET /health
-│   ├── uptime.py            # GET /uptime
-│   ├── version.py           # GET /version
-│   ├── client_ip.py         # GET /ip
-│   ├── debug.py             # GET /debug
-│   ├── favicon.py           # GET /favicon.ico
-│   ├── list_routes.py       # GET /routes
-│   ├── proxy_global.py      # GET /proxy (UI) + /proxy/{path:path} (proxy)
-│   ├── render_info.py       # GET /render
-│   └── utils.py             # GET /whois, /uuid, POST /base64/*, POST /translate, GET /screenshot
-└── requirements.txt
+├── app.py
+├── config.py
+├── keep_alive.py
+├── main.py
+├── proxy.py
+├── user_agents.json
+├── .env.example
+├── requirements.txt
+├── pyproject.toml
+├── uv.lock
+├── ENDPOINTS.md
+├── scripts/
+│   └── generate_docs.sh
+├── tests/
+│   ├── __init__.py
+│   └── test_endpoints.py
+├── .github/
+│   └── workflows/ci.yml
+└── endpoints/   (78 files, auto-discovered)
 ```
 
 ## Quick start

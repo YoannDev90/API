@@ -7,6 +7,7 @@ logs/
 *.jfm
 *.env
 *.sh
+!scripts/generate_docs.sh
 
 .ruff_cache/
 ms-playwright/
