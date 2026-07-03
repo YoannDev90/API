@@ -62,7 +62,6 @@ uv run pytest tests/ -v
 
 | Var | Required | Description |
 |-----|----------|-------------|
-| `DATA_SERVICE_BASE_URL` | yes | Upstream API base URL |
 | `RENDER_EXTERNAL_URL` | no | Self-ping URL (Render only) |
 | `PLAYWRIGHT_BROWSERS_PATH` | no | Playwright browsers path |
 | `HOST` | no | Bind address (default `0.0.0.0`) |
