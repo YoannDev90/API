@@ -13,6 +13,7 @@ dependencies = [
     "deep-translator",
     "dnspython",
     "playwright",
+    "cloudscraper",
 ]
 
 [project.optional-dependencies]

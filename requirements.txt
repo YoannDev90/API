@@ -8,6 +8,7 @@ python-whois
 deep-translator
 dnspython
 playwright
+cloudscraper
 
 # dev
 pytest
