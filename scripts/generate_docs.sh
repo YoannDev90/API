@@ -14,9 +14,8 @@ ENDPOINTS_MD="ENDPOINTS.md"
   echo "|--------|------|------|"
 } > "$ENDPOINTS_MD"
 
-for file in $(ls endpoints/*.py | sort); do
-  name=$(basename "$file" .py)
-  [ "$name" = "__init__" ] && continue
+find endpoints -name '*.py' ! -name '__init__.py' -print | sort | while read -r file; do
+  name=$(echo "$file" | sed 's|^endpoints/||' | sed 's|\.py$||' | tr '/' '.')
   while IFS=: read -r line; do
     method=$(echo "$line" | sed -n 's/.*@router\.\([a-z]*\)(.*/\1/p')
     path=$(echo "$line" | sed -n "s/.*@router\.$method(\"\([^\"]*\)\".*/\1/p")
@@ -35,10 +34,9 @@ echo "→ $ENDPOINTS_MD ($COUNT routes)"
 
 # ── Update README tree ───────────────────────────────────────────────────
 TREE=$(mktemp)
-ENDCOUNT=$(ls -1 endpoints/*.py | wc -l)
-cat > "$TREE" <<TREEBLOCK
-\`\`\`
-├── app.py
+ENDCOUNT=$(find endpoints -name '*.py' ! -name '__init__.py' | wc -l)
+SUBDIRS=$(find endpoints -mindepth 1 -maxdepth 1 -type d | sort | sed 's|endpoints/||')
+TREE_CONTENT="├── app.py
 ├── config.py
 ├── keep_alive.py
 ├── main.py
@@ -50,13 +48,18 @@ cat > "$TREE" <<TREEBLOCK
 ├── uv.lock
 ├── ENDPOINTS.md
 ├── scripts/
-│   └── generate_docs.sh
 ├── tests/
-│   ├── __init__.py
-│   └── test_endpoints.py
 ├── .github/
-│   └── workflows/ci.yml
-└── endpoints/   (${ENDCOUNT} files, auto-discovered)
+└── endpoints/   (${ENDCOUNT} files)"
+for d in $SUBDIRS; do
+    count=$(find "endpoints/$d" -name '*.py' ! -name '__init__.py' | wc -l)
+    TREE_CONTENT="$TREE_CONTENT
+    ├── $d/   (${count} files)"
+done
+
+cat > "$TREE" <<TREEBLOCK
+\`\`\`
+${TREE_CONTENT}
 \`\`\`
 TREEBLOCK
 

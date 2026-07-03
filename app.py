@@ -25,11 +25,12 @@ def load_endpoints(app: FastAPI):
 
     files = sorted(
         f
-        for f in endpoints_dir.glob("*.py")
+        for f in endpoints_dir.rglob("*.py")
         if f.name != "__init__.py"
     )
     for file in files:
-        module_name = f"endpoints.{file.stem}"
+        rel = file.relative_to(endpoints_dir.parent)
+        module_name = str(rel.with_suffix("")).replace("/", ".")
         try:
             module = importlib.import_module(module_name)
             if hasattr(module, "router"):

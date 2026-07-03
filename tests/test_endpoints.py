@@ -609,9 +609,11 @@ class TestAllModules:
         import importlib
         d = Path(__file__).parent.parent / "endpoints"
         missing = []
-        for f in sorted(d.glob("*.py")):
+        for f in sorted(d.rglob("*.py")):
             if f.name == "__init__.py": continue
-            m = importlib.import_module(f"endpoints.{f.stem}")
+            rel = f.relative_to(d.parent)
+            mod = str(rel.with_suffix("")).replace("/", ".")
+            m = importlib.import_module(mod)
             if not hasattr(m, "router"):
                 missing.append(f.stem)
         assert not missing, f"Modules missing router: {missing}"
