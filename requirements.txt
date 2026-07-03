@@ -4,6 +4,7 @@ httpx
 uvicorn[standard]
 pydantic
 pydantic-settings
+python-whois
 
 # dev
 pytest

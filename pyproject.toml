@@ -9,6 +9,7 @@ dependencies = [
     "uvicorn[standard]",
     "pydantic",
     "pydantic-settings",
+    "python-whois",
 ]
 
 [project.optional-dependencies]
