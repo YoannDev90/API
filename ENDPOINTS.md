@@ -4,6 +4,13 @@ Auto-generated. Run `scripts/generate_docs.sh` to refresh.
 
 | Category | Method | Path | File |
 |----------|--------|------|------|
+| auth | get | /models/{model_id} | openai.py |
+| auth | get | /models | openai.py |
+| auth | post | /chat/completions | openai.py |
+| auth | post | /embeddings | openai.py |
+| auth | post | /images/generations | openai.py |
+| auth | post | /moderations | openai.py |
+| auth | post | /responses | openai.py |
 | core | get | /debug | debug.py |
 | core | get | /favicon.ico | favicon.py |
 | core | get | /health | health.py |
@@ -187,4 +194,4 @@ Auto-generated. Run `scripts/generate_docs.sh` to refresh.
 | web | get | /user-agents/random | user_agents_random.py |
 | web | post | /translate | translate.py |
 | web | post | /webhook/test | webhook_test.py |
-| **185 routes** | | | |
+| **192 routes** | | | |

@@ -751,6 +751,36 @@ class TestBatch7_Format:
     def test_pretty_xml(self): assert client.get("/pretty-xml?url=https://example.com").status_code in (200, 502)
 
 
+class TestOpenAI:
+    def test_auth_required(self):
+        r = client.post("/auth/v1/chat/completions", json={"model": "gpt-4o", "messages": [{"role": "user", "content": "hi"}]})
+        assert r.status_code == 401
+
+    def test_auth_invalid(self):
+        r = client.post("/auth/v1/chat/completions",
+            json={"model": "gpt-4o", "messages": [{"role": "user", "content": "hi"}]},
+            headers={"Authorization": "Bearer invalid_key"})
+        assert r.status_code == 401
+
+    def test_hidden_from_schema(self):
+        from app import app
+        for r in app.routes:
+            if hasattr(r, "path") and "/auth/" in r.path:
+                assert getattr(r, "include_in_schema", True) is False or r.path.startswith("/openapi")
+
+    def test_chat_validation(self):
+        r = client.post("/auth/v1/chat/completions", json={}, headers={"Authorization": "Bearer test"})
+        assert r.status_code == 422
+
+    def test_embeddings_validation(self):
+        r = client.post("/auth/v1/embeddings", json={}, headers={"Authorization": "Bearer test"})
+        assert r.status_code == 422
+
+    def test_models_list(self):
+        r = client.get("/auth/v1/models", headers={"Authorization": "Bearer test"})
+        assert r.status_code in (401, 502)
+
+
 class TestMiddleware:
     def test_404(self):
         assert client.get("/nonexistent").status_code == 404
