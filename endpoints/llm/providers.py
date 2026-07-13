@@ -1,5 +1,4 @@
 """Free LLM provider registry with benchmark data."""
-import os
 from dataclasses import dataclass
 from typing import Any, Callable
 
@@ -15,16 +14,39 @@ class ProviderInfo:
     enabled: bool = True
 
 
-def _get_pollinations(model="llama"):
-    from endpoints.llm.pollinations_provider import PollinationsClient
-    return PollinationsClient(model=model)
+def _get_freeai():
+    from llm4free import FreeAI
+    return FreeAI()
 
 
-def _get_pollinations_fn(model_name):
-    def _factory():
-        from endpoints.llm.pollinations_provider import PollinationsClient
-        return PollinationsClient(model=model_name)
-    return _factory
+def _get_deepai():
+    from llm4free import DeepAI
+    return DeepAI()
+
+
+def _get_k2think():
+    from llm4free import K2Think
+    return K2Think()
+
+
+def _get_freeai_online():
+    from llm4free import FreeAIOnline
+    return FreeAIOnline()
+
+
+def _get_netwrck():
+    from llm4free import Netwrck
+    return Netwrck()
+
+
+def _get_wise_cat():
+    from llm4free import WiseCat
+    return WiseCat()
+
+
+def _get_ai4chat():
+    from llm4free import AI4Chat
+    return AI4Chat()
 
 
 def _get_heckai():
@@ -32,23 +54,19 @@ def _get_heckai():
     return HeckAI()
 
 
-# Pollinations models sorted by benchmark speed (ms):
-# llama(414) gemma(445) deepseek(466) openai(520) mistral(788)
-# mistral-small(1063) grok(1415) qwen-coder(1528) nova-fast(1945) nova(2931)
-# Plus HeckAI (free, no auth) as ultimate fallback
-
+# Benchmark results:
+# freeai (1589ms) → deepai (2469ms) → k2think (3057ms)
+# → freeai_online (3158ms) → netwrck (3284ms) → wise_cat (3893ms)
+# → ai4chat (5345ms) → heckai (5391ms)
 PROVIDERS: list[ProviderInfo] = [
-    ProviderInfo("poll-llama", _get_pollinations_fn("llama"), ["llama"], priority=0),
-    ProviderInfo("poll-gemma", _get_pollinations_fn("gemma"), ["gemma"], priority=1),
-    ProviderInfo("poll-deepseek", _get_pollinations_fn("deepseek"), ["deepseek"], priority=2),
-    ProviderInfo("poll-openai", _get_pollinations_fn("openai"), ["openai"], priority=3),
-    ProviderInfo("poll-mistral", _get_pollinations_fn("mistral"), ["mistral"], priority=4),
-    ProviderInfo("poll-mistral-small", _get_pollinations_fn("mistral-small-3.2"), ["mistral-small-3.2"], priority=5),
-    ProviderInfo("poll-grok", _get_pollinations_fn("grok"), ["grok"], priority=6),
-    ProviderInfo("poll-qwen-coder", _get_pollinations_fn("qwen-coder"), ["qwen-coder"], priority=7),
-    ProviderInfo("poll-nova-fast", _get_pollinations_fn("nova-fast"), ["nova-fast"], priority=8),
-    ProviderInfo("poll-nova", _get_pollinations_fn("nova"), ["nova"], priority=9),
-    ProviderInfo("heckai", _get_heckai, ["deepseek/deepseek-v4-flash"], priority=10),
+    ProviderInfo("freeai", _get_freeai, [], priority=0),
+    ProviderInfo("deepai", _get_deepai, [], priority=1),
+    ProviderInfo("k2think", _get_k2think, [], priority=2),
+    ProviderInfo("freeai_online", _get_freeai_online, [], priority=3),
+    ProviderInfo("netwrck", _get_netwrck, [], priority=4),
+    ProviderInfo("wise_cat", _get_wise_cat, [], priority=5),
+    ProviderInfo("ai4chat", _get_ai4chat, [], priority=6),
+    ProviderInfo("heckai", _get_heckai, [], priority=7),
 ]
 
 

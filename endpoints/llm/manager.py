@@ -15,11 +15,11 @@ _MAX_ERRORS = 5
 _WINDOW = 20
 
 FREE_MODEL_DEFAULTS = [
-    "llama",
-    "gemma",
-    "deepseek",
-    "openai",
-    "mistral",
+    "qwen7b",
+    "standard",
+    "MBZUAI-IFM/K2-Think-v2",
+    "gpt-4o",
+    "deepseek/deepseek-v4-flash",
 ]
 
 
