@@ -23,6 +23,8 @@ dependencies = [
     "zxcvbn",
     "user-agents",
     "holidays",
+    "llm4free",
+    "tiktoken",
 ]
 
 [project.optional-dependencies]

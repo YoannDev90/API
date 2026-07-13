@@ -64,6 +64,11 @@ Auto-generated. Run `scripts/generate_docs.sh` to refresh.
 | format | post | /json/minify | json_minify.py |
 | format | post | /json/patch | json_patch.py |
 | format | post | /json/schema | json_schema.py |
+| llm | get | /models | api.py |
+| llm | get | /providers | api.py |
+| llm | post | /chat/completions | api.py |
+| llm | post | /embeddings | api.py |
+| llm | post | /providers/{name}/toggle | api.py |
 | math | get | /divisors | divisors.py |
 | math | get | /factors | factors.py |
 | math | get | /is-prime | is_prime.py |
@@ -194,4 +199,4 @@ Auto-generated. Run `scripts/generate_docs.sh` to refresh.
 | web | get | /user-agents/random | user_agents_random.py |
 | web | post | /translate | translate.py |
 | web | post | /webhook/test | webhook_test.py |
-| **192 routes** | | | |
+| **197 routes** | | | |

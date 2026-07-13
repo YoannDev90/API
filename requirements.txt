@@ -20,6 +20,8 @@ user-agents
 bcrypt
 pyyaml
 holidays
+llm4free
+tiktoken
 
 # dev
 pytest
