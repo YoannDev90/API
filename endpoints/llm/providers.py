@@ -15,58 +15,61 @@ class ProviderInfo:
 
 
 def _get_freeai():
-    from llm4free import FreeAI
-    return FreeAI()
-
+    from llm4free import FreeAI; return FreeAI()
 
 def _get_deepai():
-    from llm4free import DeepAI
-    return DeepAI()
-
+    from llm4free import DeepAI; return DeepAI()
 
 def _get_k2think():
-    from llm4free import K2Think
-    return K2Think()
-
+    from llm4free import K2Think; return K2Think()
 
 def _get_freeai_online():
-    from llm4free import FreeAIOnline
-    return FreeAIOnline()
-
+    from llm4free import FreeAIOnline; return FreeAIOnline()
 
 def _get_netwrck():
-    from llm4free import Netwrck
-    return Netwrck()
-
+    from llm4free import Netwrck; return Netwrck()
 
 def _get_wise_cat():
-    from llm4free import WiseCat
-    return WiseCat()
-
+    from llm4free import WiseCat; return WiseCat()
 
 def _get_ai4chat():
-    from llm4free import AI4Chat
-    return AI4Chat()
-
+    from llm4free import AI4Chat; return AI4Chat()
 
 def _get_heckai():
-    from llm4free import HeckAI
-    return HeckAI()
+    from llm4free import HeckAI; return HeckAI()
 
-
-# Benchmark results:
-# freeai (1589ms) → deepai (2469ms) → k2think (3057ms)
-# → freeai_online (3158ms) → netwrck (3284ms) → wise_cat (3893ms)
-# → ai4chat (5345ms) → heckai (5391ms)
+# Providers with ALL their working models from full benchmark (51 combos)
 PROVIDERS: list[ProviderInfo] = [
-    ProviderInfo("freeai", _get_freeai, [], priority=0),
-    ProviderInfo("deepai", _get_deepai, [], priority=1),
-    ProviderInfo("k2think", _get_k2think, [], priority=2),
-    ProviderInfo("freeai_online", _get_freeai_online, [], priority=3),
-    ProviderInfo("netwrck", _get_netwrck, [], priority=4),
-    ProviderInfo("wise_cat", _get_wise_cat, [], priority=5),
-    ProviderInfo("ai4chat", _get_ai4chat, [], priority=6),
-    ProviderInfo("heckai", _get_heckai, [], priority=7),
+    ProviderInfo("freeai", _get_freeai, ["qwen7b", "qwen3-8b"], priority=0),
+    ProviderInfo("deepai", _get_deepai, [
+        "gpt-oss-120b", "gemini-2.5-flash-lite", "llama-4-scout",
+        "llama-3.3-70b-instruct", "super-genius", "deepseek-v3.2",
+        "llama-3.1-8b-instant", "gemini-3-pro", "gpt-4.1-nano",
+        "qwen3-30b", "gpt-5-nano", "gemma-3-12b", "gemini2-9b", "standard",
+    ], priority=1),
+    ProviderInfo("k2think", _get_k2think, ["MBZUAI-IFM/K2-Think-v2"], priority=2),
+    ProviderInfo("freeai_online", _get_freeai_online, ["gpt-4o"], priority=3),
+    ProviderInfo("netwrck", _get_netwrck, [
+        "gryphe/mythomax-l2-13b", "thedrummer/valkyrie-49b-v1",
+        "nvidia/llama-3.1-nemotron-70b-instruct", "deepseek/deepseek-chat",
+        "minimax/minimax-m2.5", "sao10k/l3-euryale-70b",
+        "neversleep/llama-3.1-lumimaid-8b", "neversleep/llama-3.1-lumimaid-70b",
+        "thedrummer/skyfall-36b-v2",
+    ], priority=4),
+    ProviderInfo("wise_cat", _get_wise_cat, ["WiseCat/chat-model-small"], priority=5),
+    ProviderInfo("ai4chat", _get_ai4chat, [
+        "codex-mini", "o1-pro", "o4-mini", "grok-4.1-fast",
+        "gemini-3-flash", "gpt-4.1-nano", "gpt-3.5",
+        "o3-mini-high", "o3-mini", "gpt-5.2", "gpt-4.5",
+        "gpt-4o-mini-search-preview",
+    ], priority=6),
+    ProviderInfo("heckai", _get_heckai, [
+        "google/gemini-3.1-flash-lite", "google/gemini-3-flash-preview",
+        "openai/gpt-5.4-mini", "minimax/minimax-m3",
+        "deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro",
+        "stepfun/step-3.7-flash", "tencent/hy3-preview",
+        "qwen/qwen3.7-plus",
+    ], priority=7),
 ]
 
 

@@ -2,17 +2,11 @@
 import asyncio
 import time
 import logging
-from collections import defaultdict
 
 from endpoints.llm.providers import PROVIDERS, ProviderInfo
+from endpoints.llm import monitor
 
 logger = logging.getLogger("api-proxy.llm")
-
-_metrics: dict[str, dict] = defaultdict(lambda: {"latencies": [], "errors": 0, "successes": 0, "consecutive_errors": 0})
-_cooldown_until: dict[str, float] = {}
-_COOLDOWN_SECONDS = 60
-_MAX_ERRORS = 5
-_WINDOW = 20
 
 FREE_MODEL_DEFAULTS = [
     "qwen7b",
@@ -31,53 +25,14 @@ def _resolve_model(provider: ProviderInfo, requested: str) -> str:
     return FREE_MODEL_DEFAULTS[0]
 
 
-def _avg_latency(name: str) -> float:
-    lats = _metrics[name]["latencies"][-_WINDOW:]
-    return sum(lats) / len(lats) if lats else 999.0
-
-
 def _enabled_providers() -> list[ProviderInfo]:
-    now = time.time()
-    enabled = []
-    for p in PROVIDERS:
-        if not p.enabled:
-            continue
-        if _cooldown_until.get(p.name, 0) > now:
-            continue
-        enabled.append(p)
-    enabled.sort(key=lambda p: (_avg_latency(p.name), -p.priority))
+    enabled = [p for p in PROVIDERS if p.enabled and monitor.is_available(p.name)]
+    enabled.sort(key=lambda p: (monitor.avg_latency(p.name), -p.priority))
     return enabled
 
 
-def _record_success(name: str, latency_ms: float):
-    _metrics[name]["successes"] += 1
-    _metrics[name]["latencies"].append(latency_ms)
-    _metrics[name]["consecutive_errors"] = 0
-    if len(_metrics[name]["latencies"]) > _WINDOW * 5:
-        _metrics[name]["latencies"] = _metrics[name]["latencies"][-_WINDOW:]
-
-
-def _record_error(name: str):
-    _metrics[name]["errors"] += 1
-    _metrics[name]["consecutive_errors"] += 1
-    if _metrics[name]["consecutive_errors"] >= _MAX_ERRORS:
-        _cooldown_until[name] = time.time() + _COOLDOWN_SECONDS
-        logger.warning(f"Provider {name} on cooldown ({_MAX_ERRORS} consecutive errors)")
-
-
 def get_provider_status():
-    from endpoints.llm.models import ProviderStatus
-    results = []
-    for p in PROVIDERS:
-        m = _metrics[p.name]
-        results.append(ProviderStatus(
-            name=p.name, enabled=p.enabled,
-            latency_ms=round(_avg_latency(p.name), 1),
-            successes=m["successes"], errors=m["errors"],
-            available_models=p.available_models,
-            supports_stream=p.supports_stream,
-        ))
-    return sorted(results, key=lambda x: (-x.successes, x.latency_ms))
+    return monitor.get_all_stats()
 
 
 async def execute_chat(request):
@@ -96,7 +51,7 @@ async def execute_chat(request):
             if request.stream:
                 response = await _call_stream(provider, request, model)
                 latency = (time.time() - start) * 1000
-                _record_success(provider.name, latency)
+                monitor.record_success(provider.name, latency)
                 return provider.name, response, True
             else:
                 response = await asyncio.get_event_loop().run_in_executor(
@@ -104,19 +59,17 @@ async def execute_chat(request):
                 )
                 latency = (time.time() - start) * 1000
 
-                # Check if response has actual content
                 choice = response.choices[0] if response.choices else None
                 content = choice.message.content if choice and choice.message else None
                 if not content or content.strip() == "":
-                    _record_error(provider.name)
+                    monitor.record_error(provider.name)
                     errors.append(f"{provider.name}: empty response")
-                    logger.info(f"Provider {provider.name}: empty response")
                     continue
 
-                _record_success(provider.name, latency)
+                monitor.record_success(provider.name, latency)
                 return provider.name, response, False
         except Exception as e:
-            _record_error(provider.name)
+            monitor.record_error(provider.name)
             errors.append(f"{provider.name}: {e}")
             logger.info(f"Provider {provider.name} failed: {e}")
             continue
@@ -126,7 +79,6 @@ async def execute_chat(request):
 
 
 def _call_sync(provider, request, model: str):
-    """Synchronous call to a provider."""
     client = provider.factory()
     params = {
         "model": model,
@@ -141,7 +93,6 @@ def _call_sync(provider, request, model: str):
 
 
 async def _call_stream(provider, request, model: str):
-    """Stream call to a provider. Returns an async generator of OpenAI SSE chunks."""
     client = provider.factory()
     params = {
         "model": model,

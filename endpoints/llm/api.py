@@ -16,6 +16,12 @@ logger = logging.getLogger("api-proxy.llm")
 router = APIRouter(prefix="/v1", tags=["free-llm"])
 
 
+@router.on_event("startup")
+async def _start_monitor():
+    from endpoints.llm.monitor import start_monitor
+    start_monitor()
+
+
 @router.post("/chat/completions")
 async def chat_completions(request: ChatCompletionRequest):
     """Chat completion with auto-fallback across free providers."""
