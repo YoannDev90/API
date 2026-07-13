@@ -42,11 +42,6 @@ def _get_gptfree():
     return GptFree()
 
 
-def _get_onefree():
-    from llm4free import OneFreeAI
-    return OneFreeAI()
-
-
 def _get_freeai_online():
     from llm4free import FreeAIOnline
     return FreeAIOnline()
@@ -62,22 +57,15 @@ def _get_k2think():
     return K2Think()
 
 
-def _get_twoai():
-    from llm4free import TwoAI
-    return TwoAI()
-
-
 PROVIDERS: list[ProviderInfo] = [
-    ProviderInfo("heckai", _get_heckai, [], priority=0),
-    ProviderInfo("artingai", _get_artingai, [], priority=1),
-    ProviderInfo("freeai", _get_freeai, [], priority=2),
-    ProviderInfo("chatgpt", _get_chatgpt, [], priority=3),
-    ProviderInfo("gptfree", _get_gptfree, [], priority=4),
-    ProviderInfo("onefree", _get_onefree, [], priority=5),
-    ProviderInfo("freeai_online", _get_freeai_online, [], priority=6),
-    ProviderInfo("essai", _get_essai, [], priority=7),
-    ProviderInfo("k2think", _get_k2think, [], priority=8),
-    ProviderInfo("twoai", _get_twoai, [], priority=9),
+    ProviderInfo("heckai", _get_heckai, ["deepseek/deepseek-v4-flash", "openai/gpt-5.4-mini", "google/gemini-3-flash-preview"], priority=0),
+    ProviderInfo("freeai", _get_freeai, ["gpt-4o-mini"], priority=1),
+    ProviderInfo("chatgpt", _get_chatgpt, ["gpt-4o-mini"], priority=2),
+    ProviderInfo("gptfree", _get_gptfree, ["gpt-4o-mini"], priority=3),
+    ProviderInfo("freeai_online", _get_freeai_online, [], priority=4),
+    ProviderInfo("essai", _get_essai, [], priority=5),
+    ProviderInfo("k2think", _get_k2think, [], priority=6),
+    ProviderInfo("artingai", _get_artingai, ["gpt-5", "gpt-4o-mini"], priority=7),
 ]
 
 

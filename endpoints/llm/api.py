@@ -25,7 +25,10 @@ async def chat_completions(request: ChatCompletionRequest):
             return _stream_response(response, provider_name)
         return _sync_response(response, provider_name, request)
     except RuntimeError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        return JSONResponse(
+            status_code=502,
+            content={"error": {"message": str(e), "type": "server_error", "code": "all_providers_failed"}},
+        )
 
 
 def _sync_response(response, provider: str, request: ChatCompletionRequest):

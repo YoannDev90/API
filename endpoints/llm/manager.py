@@ -3,18 +3,32 @@ import asyncio
 import time
 import logging
 from collections import defaultdict
-from dataclasses import dataclass
 
 from endpoints.llm.providers import PROVIDERS, ProviderInfo
 
 logger = logging.getLogger("api-proxy.llm")
 
-# Track per-provider metrics: {provider_name: {"latencies": [...], "errors": int, "successes": int}}
 _metrics: dict[str, dict] = defaultdict(lambda: {"latencies": [], "errors": 0, "successes": 0, "consecutive_errors": 0})
 _cooldown_until: dict[str, float] = {}
 _COOLDOWN_SECONDS = 60
 _MAX_ERRORS = 5
-_WINDOW = 20  # last N requests for avg
+_WINDOW = 20
+
+FREE_MODEL_DEFAULTS = [
+    "deepseek/deepseek-v4-flash",
+    "openai/gpt-5.4-mini",
+    "google/gemini-3.1-flash-lite",
+    "google/gemini-3-flash-preview",
+    "qwen/qwen3.7-plus",
+]
+
+
+def _resolve_model(provider: ProviderInfo, requested: str) -> str:
+    if requested and requested != "auto":
+        return requested
+    if provider.available_models:
+        return provider.available_models[0]
+    return FREE_MODEL_DEFAULTS[0]
 
 
 def _avg_latency(name: str) -> float:
@@ -41,6 +55,7 @@ def _record_success(name: str, latency_ms: float):
     _metrics[name]["consecutive_errors"] = 0
     if len(_metrics[name]["latencies"]) > _WINDOW * 5:
         _metrics[name]["latencies"] = _metrics[name]["latencies"][-_WINDOW:]
+
 
 def _record_error(name: str):
     _metrics[name]["errors"] += 1
@@ -71,38 +86,50 @@ async def execute_chat(request):
     """
     providers = _enabled_providers()
     if not providers:
-        raise RuntimeError("No available providers")
+        raise RuntimeError("No available providers (all disabled or on cooldown)")
 
-    last_error = None
+    errors = []
     for provider in providers:
+        model = _resolve_model(provider, request.model)
         try:
             start = time.time()
             if request.stream:
-                response = await _call_stream(provider, request)
+                response = await _call_stream(provider, request, model)
                 latency = (time.time() - start) * 1000
                 _record_success(provider.name, latency)
                 return provider.name, response, True
             else:
                 response = await asyncio.get_event_loop().run_in_executor(
-                    None, lambda: _call_sync(provider, request)
+                    None, lambda m=model, p=provider: _call_sync(p, request, m)
                 )
                 latency = (time.time() - start) * 1000
+
+                # Check if response has actual content
+                choice = response.choices[0] if response.choices else None
+                content = choice.message.content if choice and choice.message else None
+                if not content or content.strip() == "":
+                    _record_error(provider.name)
+                    errors.append(f"{provider.name}: empty response")
+                    logger.info(f"Provider {provider.name}: empty response")
+                    continue
+
                 _record_success(provider.name, latency)
                 return provider.name, response, False
         except Exception as e:
             _record_error(provider.name)
-            last_error = e
+            errors.append(f"{provider.name}: {e}")
             logger.info(f"Provider {provider.name} failed: {e}")
             continue
 
-    raise RuntimeError(f"All providers failed. Last error: {last_error}")
+    summary = "; ".join(errors)
+    raise RuntimeError(f"All {len(providers)} providers failed: {summary}")
 
 
-def _call_sync(provider, request):
+def _call_sync(provider, request, model: str):
     """Synchronous call to a provider."""
     client = provider.factory()
     params = {
-        "model": request.model if request.model != "auto" else None,
+        "model": model,
         "messages": [{"role": m.role, "content": m.content} for m in request.messages],
         "max_tokens": request.max_tokens,
         "temperature": request.temperature,
@@ -113,11 +140,11 @@ def _call_sync(provider, request):
     return client.chat.completions.create(**params)
 
 
-async def _call_stream(provider, request):
+async def _call_stream(provider, request, model: str):
     """Stream call to a provider. Returns an async generator of OpenAI SSE chunks."""
     client = provider.factory()
     params = {
-        "model": request.model if request.model != "auto" else None,
+        "model": model,
         "messages": [{"role": m.role, "content": m.content} for m in request.messages],
         "max_tokens": request.max_tokens,
         "temperature": request.temperature,
@@ -125,8 +152,6 @@ async def _call_stream(provider, request):
         "stream": True,
     }
     params = {k: v for k, v in params.items() if v is not None}
-
-    stream = await asyncio.get_event_loop().run_in_executor(
+    return await asyncio.get_event_loop().run_in_executor(
         None, lambda: client.chat.completions.create(**params)
     )
-    return stream
