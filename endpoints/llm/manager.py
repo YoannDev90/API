@@ -15,11 +15,11 @@ _MAX_ERRORS = 5
 _WINDOW = 20
 
 FREE_MODEL_DEFAULTS = [
-    "deepseek/deepseek-v4-flash",
-    "openai/gpt-5.4-mini",
-    "google/gemini-3.1-flash-lite",
-    "google/gemini-3-flash-preview",
-    "qwen/qwen3.7-plus",
+    "llama",
+    "gemma",
+    "deepseek",
+    "openai",
+    "mistral",
 ]
 
 

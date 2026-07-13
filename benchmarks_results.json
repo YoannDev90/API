@@ -1,0 +1,18 @@
+{
+  "pollinations": [
+    {"model": "llama", "latency_ms": 414, "success_rate": 100},
+    {"model": "gemma", "latency_ms": 445, "success_rate": 100},
+    {"model": "deepseek", "latency_ms": 466, "success_rate": 100},
+    {"model": "openai", "latency_ms": 520, "success_rate": 100},
+    {"model": "mistral", "latency_ms": 788, "success_rate": 100},
+    {"model": "mistral-small-3.2", "latency_ms": 1063, "success_rate": 100},
+    {"model": "grok", "latency_ms": 1415, "success_rate": 100},
+    {"model": "qwen-coder", "latency_ms": 1528, "success_rate": 100},
+    {"model": "nova-fast", "latency_ms": 1945, "success_rate": 100},
+    {"model": "nova", "latency_ms": 2931, "success_rate": 100}
+  ],
+  "llm4free": [
+    {"model": "deepseek/deepseek-v4-flash", "provider": "heckai", "latency_ms": 4265, "success_rate": 100}
+  ],
+  "timestamp": "2026-07-13"
+}
