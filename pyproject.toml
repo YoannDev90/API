@@ -25,11 +25,9 @@ dependencies = [
     "holidays",
     "llm4free",
     "tiktoken",
-]
-
-[project.optional-dependencies]
-dev = [
-    "pytest",
+    "scrapling",
+    "msgspec",
+    "browserforge",
 ]
 
 [tool.uv]
