@@ -81,19 +81,23 @@ async def baseline_test():
         try:
             from endpoints.llm.manager import _call_sync
             from endpoints.llm.models import ChatCompletionRequest
+            model = provider.available_models[0] if provider.available_models else None
+            if not model:
+                _metrics[provider.name]["last_test"] = time.time()
+                return
             req = ChatCompletionRequest(
-                model=provider.available_models[0] if provider.available_models else "auto",
+                model=model,
                 messages=[{"role": "user", "content": "ping"}],
                 max_tokens=10,
             )
             start = time.time()
             await asyncio.get_event_loop().run_in_executor(
-                None, lambda p=provider: _call_sync(p, req, provider.available_models[0] if provider.available_models else None)
+                None, lambda p=provider, m=model: _call_sync(p, req, m)
             )
             latency = (time.time() - start) * 1000
             _metrics[provider.name]["last_test"] = time.time()
             record_success(provider.name, latency)
-            logger.info(f"Baseline {provider.name}: {latency:.0f}ms")
+            logger.info(f"Baseline {provider.name}/{model}: {latency:.0f}ms")
         except Exception as e:
             _metrics[provider.name]["last_test"] = time.time()
             record_error(provider.name)

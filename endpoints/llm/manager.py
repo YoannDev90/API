@@ -8,27 +8,33 @@ from endpoints.llm import monitor
 
 logger = logging.getLogger("api-proxy.llm")
 
-FREE_MODEL_DEFAULTS = [
-    "qwen7b",
-    "standard",
-    "MBZUAI-IFM/K2-Think-v2",
-    "gpt-4o",
-    "deepseek/deepseek-v4-flash",
-]
+# Build model → provider mapping from benchmark data
+MODEL_MAP: dict[str, str] = {}
+for _p in PROVIDERS:
+    for _m in _p.available_models:
+        MODEL_MAP[_m] = _p.name
 
 
 def _resolve_model(provider: ProviderInfo, requested: str) -> str:
     if requested and requested != "auto":
-        return requested
-    if provider.available_models:
-        return provider.available_models[0]
-    return FREE_MODEL_DEFAULTS[0]
+        if requested in provider.available_models:
+            return requested
+        return provider.available_models[0] if provider.available_models else None
+    return provider.available_models[0] if provider.available_models else None
+
+
+def _get_provider_for_model(model_name: str) -> ProviderInfo | None:
+    """Find the best provider for a specific model name."""
+    pname = MODEL_MAP.get(model_name)
+    if pname:
+        for p in PROVIDERS:
+            if p.name == pname and p.enabled and monitor.is_available(p.name):
+                return p
+    return None
 
 
 def _enabled_providers() -> list[ProviderInfo]:
-    enabled = [p for p in PROVIDERS if p.enabled and monitor.is_available(p.name)]
-    enabled.sort(key=lambda p: (monitor.avg_latency(p.name), -p.priority))
-    return enabled
+    return [p for p in PROVIDERS if p.enabled and monitor.is_available(p.name)]
 
 
 def get_provider_status():
@@ -36,46 +42,62 @@ def get_provider_status():
 
 
 async def execute_chat(request):
-    """Execute chat completion with retry/fallback across providers.
+    """Execute chat completion with retry/fallback.
     Returns (provider_name, response, is_stream).
     """
     providers = _enabled_providers()
     if not providers:
         raise RuntimeError("No available providers (all disabled or on cooldown)")
 
-    errors = []
+    # If specific model requested, try its provider first
+    if request.model and request.model != "auto":
+        primary = _get_provider_for_model(request.model)
+        if primary:
+            result = await _try_provider(primary, request)
+            if result is not None:
+                return result
+
+    # Fallback: try all providers in speed order
     for provider in providers:
-        model = _resolve_model(provider, request.model)
-        try:
-            start = time.time()
-            if request.stream:
-                response = await _call_stream(provider, request, model)
-                latency = (time.time() - start) * 1000
-                monitor.record_success(provider.name, latency)
-                return provider.name, response, True
-            else:
-                response = await asyncio.get_event_loop().run_in_executor(
-                    None, lambda m=model, p=provider: _call_sync(p, request, m)
-                )
-                latency = (time.time() - start) * 1000
+        result = await _try_provider(provider, request)
+        if result is not None:
+            return result
 
-                choice = response.choices[0] if response.choices else None
-                content = choice.message.content if choice and choice.message else None
-                if not content or content.strip() == "":
-                    monitor.record_error(provider.name)
-                    errors.append(f"{provider.name}: empty response")
-                    continue
+    raise RuntimeError("All providers failed")
 
-                monitor.record_success(provider.name, latency)
-                return provider.name, response, False
-        except Exception as e:
-            monitor.record_error(provider.name)
-            errors.append(f"{provider.name}: {e}")
-            logger.info(f"Provider {provider.name} failed: {e}")
-            continue
 
-    summary = "; ".join(errors)
-    raise RuntimeError(f"All {len(providers)} providers failed: {summary}")
+async def _try_provider(provider: ProviderInfo, request):
+    """Try a single provider. Returns (name, response, is_stream) or None."""
+    model = _resolve_model(provider, request.model)
+    if not model:
+        return None
+
+    try:
+        start = time.time()
+        if request.stream:
+            response = await _call_stream(provider, request, model)
+            latency = (time.time() - start) * 1000
+            monitor.record_success(provider.name, latency)
+            return provider.name, response, True
+        else:
+            response = await asyncio.get_event_loop().run_in_executor(
+                None, lambda m=model, p=provider: _call_sync(p, request, m)
+            )
+            latency = (time.time() - start) * 1000
+
+            choice = response.choices[0] if response.choices else None
+            content = choice.message.content if choice and choice.message else None
+            if not content or content.strip() == "":
+                monitor.record_error(provider.name)
+                logger.info(f"Provider {provider.name}: empty response")
+                return None
+
+            monitor.record_success(provider.name, latency)
+            return provider.name, response, False
+    except Exception as e:
+        monitor.record_error(provider.name)
+        logger.info(f"Provider {provider.name} failed: {e}")
+        return None
 
 
 def _call_sync(provider, request, model: str):
