@@ -49,13 +49,16 @@ async def execute_chat(request):
     if not providers:
         raise RuntimeError("No available providers (all disabled or on cooldown)")
 
-    # If specific model requested, try its provider first
+    # If specific model requested, try its provider first (even if on cooldown)
     if request.model and request.model != "auto":
-        primary = _get_provider_for_model(request.model)
-        if primary:
-            result = await _try_provider(primary, request)
-            if result is not None:
-                return result
+        pname = MODEL_MAP.get(request.model)
+        if pname:
+            for p in PROVIDERS:
+                if p.name == pname and p.enabled:
+                    result = await _try_provider(p, request)
+                    if result is not None:
+                        return result
+                    break
 
     # Fallback: try all providers in speed order
     for provider in providers:
