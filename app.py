@@ -1,7 +1,6 @@
-import asyncio
+"""Slim API: LLM endpoints only (for Waifly 300MB)."""
 import importlib
 import logging
-from collections import defaultdict
 from contextlib import asynccontextmanager
 from pathlib import Path
 from time import time
@@ -11,43 +10,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from keep_alive import start_self_ping
 from __init__ import __version__
 
 logger = logging.getLogger("api-proxy")
 
 
-def load_endpoints(app: FastAPI):
-    endpoints_dir = Path(__file__).parent / "endpoints"
-    if not endpoints_dir.exists():
-        logger.warning("endpoints/ directory not found")
-        return
-
-    files = sorted(
-        f
-        for f in endpoints_dir.rglob("*.py")
-        if f.name != "__init__.py"
-    )
-    for file in files:
-        rel = file.relative_to(endpoints_dir.parent)
-        module_name = str(rel.with_suffix("")).replace("/", ".")
-        try:
-            module = importlib.import_module(module_name)
-            if hasattr(module, "router"):
-                app.include_router(module.router)
-                logger.info(f"Loaded: {module_name}")
-        except Exception as e:
-            logger.error(f"Failed to load {module_name}: {e}")
+def load_llm_endpoints(app: FastAPI):
+    """Load only LLM endpoints."""
+    module = importlib.import_module("endpoints.llm.api")
+    if hasattr(module, "router"):
+        app.include_router(module.router)
+        logger.info("Loaded: endpoints.llm.api")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    ping_task = await start_self_ping()
     app.startup_time = time()
     app.openapi_schema = None
     yield
-    if ping_task:
-        ping_task.cancel()
 
 
 class ClientIPMiddleware(BaseHTTPMiddleware):
@@ -65,21 +45,26 @@ class ClientIPMiddleware(BaseHTTPMiddleware):
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
-        self.history = defaultdict(list)
-        self.lock = asyncio.Lock()
+        self.history = {}
+        self.lock = None
 
     _MAX_REQ = 5
     _WINDOW = 1.0
 
     async def dispatch(self, request, call_next):
+        import asyncio
+        if self.lock is None:
+            self.lock = asyncio.Lock()
+
         client_ip = request.scope.get("client_ip", "unknown")
         path = request.url.path
         max_req, window = self._MAX_REQ, self._WINDOW
         key = f"{client_ip}:{path}"
 
         async with self.lock:
+            from collections import defaultdict
             cutoff = time() - window
-            recent = [t for t in self.history[key] if t > cutoff]
+            recent = [t for t in self.history.get(key, []) if t > cutoff]
             if len(recent) >= max_req:
                 return JSONResponse(
                     status_code=429,
@@ -95,19 +80,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-class CacheControlMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        response = await call_next(request)
-        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Expires"] = "0"
-        return response
-
-
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="API Proxy",
-        description="API Proxy",
+        title="LLM API",
+        description="Free LLM API (OpenAI-compatible)",
         version=__version__,
         docs_url="/docs",
         redoc_url="/redoc",
@@ -115,19 +91,18 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    app.add_middleware(CacheControlMiddleware)
     app.add_middleware(RateLimitMiddleware)
     app.add_middleware(ClientIPMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+        allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],
     )
 
-    load_endpoints(app)
-    logger.info("Application started")
+    load_llm_endpoints(app)
+    logger.info("LLM API started")
     return app
 
 

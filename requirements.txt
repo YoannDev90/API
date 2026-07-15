@@ -1,29 +1,11 @@
-# main deps (see pyproject.toml for source of truth)
+# main deps
 fastapi
 httpx
 uvicorn[standard]
 pydantic
 pydantic-settings
-python-whois
-deep-translator
-dnspython
-playwright
-cloudscraper
-qrcode[pil]
-markdown
-croniter
-pyjwt
-phonenumbers
-pycountry
-zxcvbn
-user-agents
-bcrypt
-pyyaml
-holidays
-llm4free
 tiktoken
-litellm[proxy]
-prisma
+llm4free
 
 # dev
 pytest
