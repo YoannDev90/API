@@ -22,6 +22,8 @@ pyyaml
 holidays
 llm4free
 tiktoken
+litellm[proxy]
+prisma
 
 # dev
 pytest

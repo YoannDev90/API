@@ -10,6 +10,7 @@ def _clean_model_name(name: str) -> str:
     return name
 
 
+
 @dataclass
 class ProviderInfo:
     name: str
@@ -53,9 +54,6 @@ def _get_netwrck():
 def _get_ai4chat():
     from llm4free import AI4Chat; return AI4Chat()
 
-def _get_heckai():
-    from llm4free import HeckAI; return HeckAI()
-
 
 PROVIDERS: list[ProviderInfo] = [
     ProviderInfo("freeai", _get_freeai, ["qwen3-8b", "qwen7b"], priority=0),
@@ -75,13 +73,6 @@ PROVIDERS: list[ProviderInfo] = [
         "gemini-3-flash", "gpt-4.1-nano", "gpt-3.5", "o3-mini-high",
         "o3-mini", "gpt-5.2", "gpt-4.5", "gpt-4o-mini-search-preview",
     ], priority=4),
-    ProviderInfo("heckai", _get_heckai, [
-        "google/gemini-3.1-flash-lite", "google/gemini-3-flash-preview",
-        "openai/gpt-5.4-mini", "minimax/minimax-m3",
-        "deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro",
-        "stepfun/step-3.7-flash", "tencent/hy3-preview",
-        "qwen/qwen3.7-plus",
-    ], supports_images=True, priority=5),
 ]
 
 # Reverse lookup: clean_name → provider_name
@@ -100,7 +91,6 @@ def get_provider_by_name(name: str) -> ProviderInfo | None:
 
 def resolve_provider_for_model(model_name: str) -> tuple[ProviderInfo, str] | None:
     """Resolve a model name (clean or original) to (provider, original_model)."""
-    # Try direct match first
     for p in PROVIDERS:
         resolved = p.resolve_model(model_name)
         if resolved:

@@ -28,6 +28,8 @@ dependencies = [
     "scrapling",
     "msgspec",
     "browserforge",
+    "litellm[proxy]>=1.92.0",
+    "prisma>=0.15.0",
 ]
 
 [tool.uv]
