@@ -1,0 +1,2 @@
+# Minimal requirements for litellm proxy on Render
+litellm[proxy]
