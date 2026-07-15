@@ -11,7 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from keep_alive import start_self_ping
 from __init__ import __version__
 
 logger = logging.getLogger("api-proxy")
@@ -42,12 +41,9 @@ def load_endpoints(app: FastAPI):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    ping_task = await start_self_ping()
     app.startup_time = time()
     app.openapi_schema = None
     yield
-    if ping_task:
-        ping_task.cancel()
 
 
 class ClientIPMiddleware(BaseHTTPMiddleware):
