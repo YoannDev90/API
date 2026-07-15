@@ -11,11 +11,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy schema and generate prisma client with limited memory
-COPY schema.prisma .
-RUN NODE_OPTIONS="--max-old-space-size=256" prisma generate
-
-COPY . .
+COPY litellm_config.yaml .
 
 EXPOSE 10000
-CMD ["bash", "start.sh"]
+CMD ["litellm", "--config", "litellm_config.yaml", "--port", "10000", "--host", "0.0.0.0"]
