@@ -124,6 +124,7 @@ async def baseline_test():
             if not model:
                 _provider_metrics[provider.name]["last_test"] = time.time()
                 return
+            clean_name = provider.clean_names.get(model, model)
 
             from endpoints.llm.models import ChatCompletionRequest
             req = ChatCompletionRequest(
@@ -142,11 +143,11 @@ async def baseline_test():
             latency = (time.time() - start) * 1000
 
             _provider_metrics[provider.name]["last_test"] = time.time()
-            record_success(provider.name, model, latency)
-            logger.info(f"Baseline {provider.name}/{model}: {latency:.0f}ms")
+            record_success(provider.name, clean_name, latency)
+            logger.info(f"Baseline {provider.name}/{clean_name}: {latency:.0f}ms")
         except Exception as e:
             _provider_metrics[provider.name]["last_test"] = time.time()
-            record_error(provider.name, model, str(e))
+            record_error(provider.name, clean_name, str(e))
             logger.info(f"Baseline {provider.name} failed: {e}")
 
 

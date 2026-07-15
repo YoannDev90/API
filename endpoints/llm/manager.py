@@ -4,10 +4,14 @@ import time
 import logging
 from typing import Generator
 
+import tiktoken
+
 from endpoints.llm.providers import PROVIDERS, ProviderInfo
 from endpoints.llm import monitor
 
 logger = logging.getLogger("api-proxy.llm")
+
+_enc = tiktoken.get_encoding("cl100k_base")
 
 # Build model → provider mapping
 MODEL_MAP: dict[str, str] = {}
@@ -23,6 +27,10 @@ def _enabled_providers() -> list[ProviderInfo]:
 
 def get_provider_status():
     return monitor.get_all_stats()
+
+
+def _count_tokens(text: str) -> int:
+    return len(_enc.encode(text))
 
 
 def _build_params(provider: ProviderInfo, request, model: str, stream: bool) -> dict:
@@ -152,6 +160,20 @@ async def _try_provider(provider: ProviderInfo, request):
                 monitor.record_error(provider.name, clean_name, "empty response")
                 logger.info(f"Provider {provider.name}/{clean_name}: empty response")
                 return None
+
+            # Count tokens if provider didn't return usage
+            if not usage:
+                prompt_text = " ".join(
+                    m.get("content", "") for m in (request.messages or [])
+                    if isinstance(m.get("content"), str)
+                )
+                prompt_tokens = _count_tokens(prompt_text)
+                completion_tokens = _count_tokens(full_text)
+                usage = {
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "total_tokens": prompt_tokens + completion_tokens,
+                }
 
             monitor.record_success(provider.name, clean_name, latency)
             return provider.name, {

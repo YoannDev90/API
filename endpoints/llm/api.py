@@ -42,15 +42,16 @@ def _json_response(result: dict, provider: str, requested_model: str) -> JSONRes
     usage = result.get("usage")
     usage_dict = None
     if usage:
-        usage_dict = {
-            "prompt_tokens": getattr(usage, "prompt_tokens", 0),
-            "completion_tokens": getattr(usage, "completion_tokens", 0),
-            "total_tokens": getattr(usage, "total_tokens", 0),
-        }
-    elif hasattr(usage, "model_dump"):
-        usage_dict = usage.model_dump()
-    elif isinstance(usage, dict):
-        usage_dict = usage
+        if isinstance(usage, dict):
+            usage_dict = usage
+        elif hasattr(usage, "model_dump"):
+            usage_dict = usage.model_dump()
+        else:
+            usage_dict = {
+                "prompt_tokens": getattr(usage, "prompt_tokens", 0),
+                "completion_tokens": getattr(usage, "completion_tokens", 0),
+                "total_tokens": getattr(usage, "total_tokens", 0),
+            }
 
     return JSONResponse({
         "id": f"chatcmpl-{uuid.uuid4().hex[:12]}",
