@@ -3,12 +3,6 @@ set -e
 
 PORT=${PORT:-10000}
 
-# Generate prisma client if node is available
-if command -v node &> /dev/null; then
-    echo "Generating prisma client..."
-    prisma generate || echo "prisma generate failed, continuing without DB"
-fi
-
 echo "Starting llm4free API on internal port 8000..."
 uvicorn app:app --host 127.0.0.1 --port 8000 &
 LLM4FREE_PID=$!
