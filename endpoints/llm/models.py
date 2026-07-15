@@ -1,11 +1,29 @@
 """Pydantic models matching OpenAI API schema."""
-from typing import Optional, Any
+from typing import Optional, Any, Union
 from pydantic import BaseModel, Field
+
+
+class ContentPartText(BaseModel):
+    type: str = "text"
+    text: str
+
+
+class ContentPartImageUrl(BaseModel):
+    type: str = "image_url"
+    image_url: dict[str, str]
+
+
+class ContentPartFile(BaseModel):
+    type: str = "file"
+    file: dict[str, Any]
+
+
+ContentPart = Union[ContentPartText, ContentPartImageUrl, ContentPartFile]
 
 
 class Message(BaseModel):
     role: str = Field(..., description="system, user, assistant")
-    content: str | list | None = None
+    content: str | list[ContentPart] | None = None
     name: Optional[str] = None
 
 

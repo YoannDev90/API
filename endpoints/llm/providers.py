@@ -1,6 +1,13 @@
 """Free LLM provider registry with benchmark data."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable
+
+
+def _clean_model_name(name: str) -> str:
+    """Strip provider prefix from model name: 'stepfun/step-3.7-flash' → 'step-3.7-flash'."""
+    if "/" in name:
+        return name.split("/", 1)[1]
+    return name
 
 
 @dataclass
@@ -9,9 +16,26 @@ class ProviderInfo:
     factory: Callable[..., Any]
     available_models: list[str]
     supports_stream: bool = True
+    supports_images: bool = False
+    supports_files: bool = False
     requires_auth: bool = False
     priority: int = 0
     enabled: bool = True
+    clean_names: dict[str, str] = field(default_factory=dict)
+
+    def __post_init__(self):
+        self.clean_names = {m: _clean_model_name(m) for m in self.available_models}
+
+    def resolve_model(self, requested: str) -> str | None:
+        """Resolve a model name (clean or original) to the original provider model name."""
+        if not requested or requested == "auto":
+            return self.available_models[0] if self.available_models else None
+        if requested in self.available_models:
+            return requested
+        for orig, clean in self.clean_names.items():
+            if clean == requested:
+                return orig
+        return None
 
 
 def _get_freeai():
@@ -32,14 +56,14 @@ def _get_ai4chat():
 def _get_heckai():
     from llm4free import HeckAI; return HeckAI()
 
-# Providers: 42 verified models from full benchmark
+
 PROVIDERS: list[ProviderInfo] = [
     ProviderInfo("freeai", _get_freeai, ["qwen3-8b", "qwen7b"], priority=0),
     ProviderInfo("deepai", _get_deepai, [
         "gpt-oss-120b", "gemini-2.5-flash-lite", "llama-4-scout",
         "llama-3.3-70b-instruct", "deepseek-v3.2", "llama-3.1-8b-instant",
         "gemini-3-pro", "gpt-4.1-nano", "qwen3-30b", "gpt-5-nano",
-        "gemma-3-12b", "gemini2-9b", "standard",
+        "gemma-3-12b", "gemma2-9b", "standard", "super-genius",
     ], priority=1),
     ProviderInfo("freeai_online", _get_freeai_online, ["gpt-4o"], priority=2),
     ProviderInfo("netwrck", _get_netwrck, [
@@ -57,12 +81,28 @@ PROVIDERS: list[ProviderInfo] = [
         "deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro",
         "stepfun/step-3.7-flash", "tencent/hy3-preview",
         "qwen/qwen3.7-plus",
-    ], priority=5),
+    ], supports_images=True, priority=5),
 ]
+
+# Reverse lookup: clean_name → provider_name
+CLEAN_NAME_MAP: dict[str, str] = {}
+for _p in PROVIDERS:
+    for _orig, _clean in _p.clean_names.items():
+        CLEAN_NAME_MAP[_clean] = _p.name
 
 
 def get_provider_by_name(name: str) -> ProviderInfo | None:
     for p in PROVIDERS:
         if p.name == name:
             return p
+    return None
+
+
+def resolve_provider_for_model(model_name: str) -> tuple[ProviderInfo, str] | None:
+    """Resolve a model name (clean or original) to (provider, original_model)."""
+    # Try direct match first
+    for p in PROVIDERS:
+        resolved = p.resolve_model(model_name)
+        if resolved:
+            return p, resolved
     return None

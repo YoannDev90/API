@@ -26,10 +26,10 @@ async def _start_monitor():
 async def chat_completions(request: ChatCompletionRequest):
     """Chat completion with auto-fallback across free providers."""
     try:
-        provider_name, response, is_stream = await manager.execute_chat(request)
+        provider_name, result, is_stream = await manager.execute_chat(request)
         if is_stream:
-            return _stream_response(response, provider_name)
-        return _sync_response(response, provider_name, request)
+            return _stream_response(result, provider_name, request.model)
+        return _json_response(result, provider_name, request.model)
     except RuntimeError as e:
         return JSONResponse(
             status_code=502,
@@ -37,55 +37,65 @@ async def chat_completions(request: ChatCompletionRequest):
         )
 
 
-def _sync_response(response, provider: str, request: ChatCompletionRequest):
-    """Convert provider response to OpenAI-compatible JSON."""
-    choice = response.choices[0]
-    usage = getattr(response, "usage", None)
+def _json_response(result: dict, provider: str, requested_model: str) -> JSONResponse:
+    """Convert aggregated result to OpenAI-compatible JSON."""
+    usage = result.get("usage")
+    usage_dict = None
+    if usage:
+        usage_dict = {
+            "prompt_tokens": getattr(usage, "prompt_tokens", 0),
+            "completion_tokens": getattr(usage, "completion_tokens", 0),
+            "total_tokens": getattr(usage, "total_tokens", 0),
+        }
+    elif hasattr(usage, "model_dump"):
+        usage_dict = usage.model_dump()
+    elif isinstance(usage, dict):
+        usage_dict = usage
+
     return JSONResponse({
         "id": f"chatcmpl-{uuid.uuid4().hex[:12]}",
         "object": "chat.completion",
         "created": int(time.time()),
-        "model": getattr(response, "model", request.model),
+        "model": result.get("model", requested_model),
         "provider": provider,
         "choices": [{
             "index": 0,
             "message": {
-                "role": getattr(choice.message, "role", "assistant"),
-                "content": choice.message.content,
+                "role": "assistant",
+                "content": result["content"],
             },
-            "finish_reason": getattr(choice, "finish_reason", "stop"),
+            "finish_reason": result.get("finish_reason", "stop"),
         }],
-        "usage": {
-            "prompt_tokens": getattr(usage, "prompt_tokens", 0) if usage else 0,
-            "completion_tokens": getattr(usage, "completion_tokens", 0) if usage else 0,
-            "total_tokens": getattr(usage, "total_tokens", 0) if usage else 0,
-        } if usage else None,
+        "usage": usage_dict,
     })
 
 
-def _stream_response(stream, provider: str):
-    """Convert streaming response to SSE format."""
+def _stream_response(raw_stream, provider: str, requested_model: str):
+    """Yield SSE chunks directly from the provider's stream."""
     async def generate():
         try:
-            for chunk in stream:
-                if hasattr(chunk, "choices") and chunk.choices:
-                    choice = chunk.choices[0]
-                    delta = getattr(choice, "delta", None)
-                    content = getattr(delta, "content", None) if delta else None
-                    finish = getattr(choice, "finish_reason", None)
-                    chunk_data = {
-                        "id": f"chatcmpl-{uuid.uuid4().hex[:12]}",
-                        "object": "chat.completion.chunk",
-                        "created": int(time.time()),
-                        "provider": provider,
-                        "choices": [{
-                            "index": 0,
-                            "delta": {"role": "assistant"} if content is None and finish is None else {"content": content},
-                            "finish_reason": finish,
-                        }],
-                    }
-                    yield f"data: {json.dumps(chunk_data)}\n\n"
-                if hasattr(chunk, "choices") and chunk.choices and getattr(chunk.choices[0], "finish_reason", None):
+            for chunk in raw_stream:
+                if not hasattr(chunk, "choices") or not chunk.choices:
+                    continue
+                choice = chunk.choices[0]
+                delta = getattr(choice, "delta", None)
+                content = getattr(delta, "content", None) if delta else None
+                finish = getattr(choice, "finish_reason", None)
+
+                chunk_data = {
+                    "id": f"chatcmpl-{uuid.uuid4().hex[:12]}",
+                    "object": "chat.completion.chunk",
+                    "created": int(time.time()),
+                    "model": getattr(chunk, "model", requested_model),
+                    "provider": provider,
+                    "choices": [{
+                        "index": 0,
+                        "delta": {"role": "assistant"} if content is None and finish is None else {"content": content},
+                        "finish_reason": finish,
+                    }],
+                }
+                yield f"data: {json.dumps(chunk_data)}\n\n"
+                if finish:
                     break
             yield "data: [DONE]\n\n"
         except Exception as e:
@@ -104,29 +114,32 @@ async def embeddings(request: EmbeddingRequest):
 
 @router.get("/models")
 async def list_models():
-    """List all available free models."""
+    """List all available free models with clean names."""
     all_models = []
+    seen = set()
     for p in PROVIDERS:
         for m in p.available_models:
+            clean = p.clean_names.get(m, m)
+            if clean in seen:
+                continue
+            seen.add(clean)
             all_models.append({
-                "id": m,
+                "id": clean,
                 "object": "model",
                 "created": 0,
                 "owned_by": p.name,
+                "original_id": m,
                 "permission": [],
-                "root": m,
+                "root": clean,
             })
-    if not all_models:
-        # List known free models directly
-        known = [
-            "deepseek/deepseek-v4-flash", "deepseek/deepseek-v4-pro",
-            "qwen/qwen3.7-plus", "stepfun/step-3.7-flash",
-            "google/gemini-3.1-flash-lite", "google/gemini-3-flash-preview",
-            "openai/gpt-5.4-mini", "minimax/minimax-m3",
-        ]
-        for m in known:
-            all_models.append({"id": m, "object": "model", "created": 0, "owned_by": "free"})
     return ModelListResponse(object="list", data=all_models)
+
+
+@router.get("/models/stats")
+async def model_stats():
+    """Get success/failure stats per model."""
+    from endpoints.llm.monitor import get_model_stats
+    return {"models": get_model_stats()}
 
 
 @router.get("/providers")
