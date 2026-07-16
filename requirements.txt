@@ -1,3 +1,1 @@
 litellm[proxy]
-prisma
-tomlkit
