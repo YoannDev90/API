@@ -56,23 +56,23 @@ def _get_ai4chat():
 
 
 PROVIDERS: list[ProviderInfo] = [
-    ProviderInfo("freeai", _get_freeai, ["qwen3-8b", "qwen7b"], priority=0),
+    ProviderInfo("freeai", _get_freeai, ["qwen3-8b", "qwen7b"], priority=0, enabled=False),
     ProviderInfo("deepai", _get_deepai, [
         "gpt-oss-120b", "gemini-2.5-flash-lite", "llama-4-scout",
         "llama-3.3-70b-instruct", "deepseek-v3.2", "llama-3.1-8b-instant",
         "gemini-3-pro", "gpt-4.1-nano", "qwen3-30b", "gpt-5-nano",
         "gemma-3-12b", "gemma2-9b", "standard", "super-genius",
     ], priority=1),
-    ProviderInfo("freeai_online", _get_freeai_online, ["gpt-4o"], priority=2),
+    ProviderInfo("freeai_online", _get_freeai_online, ["gpt-4o"], priority=2, enabled=False),
     ProviderInfo("netwrck", _get_netwrck, [
         "nvidia/llama-3.1-nemotron-70b-instruct", "deepseek/deepseek-chat",
         "minimax/minimax-m2.5",
-    ], priority=3),
+    ], priority=3, enabled=False),
     ProviderInfo("ai4chat", _get_ai4chat, [
         "codex-mini", "o1-pro", "o4-mini", "grok-4.1-fast",
         "gemini-3-flash", "gpt-4.1-nano", "gpt-3.5", "o3-mini-high",
         "o3-mini", "gpt-5.2", "gpt-4.5", "gpt-4o-mini-search-preview",
-    ], priority=4),
+    ], priority=4, enabled=False),
 ]
 
 # Reverse lookup: clean_name → provider_name

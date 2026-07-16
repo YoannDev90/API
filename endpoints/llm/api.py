@@ -119,6 +119,8 @@ async def list_models():
     all_models = []
     seen = set()
     for p in PROVIDERS:
+        if not p.enabled:
+            continue
         for m in p.available_models:
             clean = p.clean_names.get(m, m)
             if clean in seen:
