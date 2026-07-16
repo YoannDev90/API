@@ -1,11 +1,6 @@
-# main deps
 fastapi
 httpx
 uvicorn[standard]
 pydantic
-pydantic-settings
 tiktoken
 llm4free
-
-# dev
-pytest
