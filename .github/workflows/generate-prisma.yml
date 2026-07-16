@@ -1,0 +1,45 @@
+name: Generate Prisma Client
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: pip install litellm[proxy] prisma
+
+      - name: Generate Prisma client
+        run: |
+          SCHEMA=$(python3 -c "import litellm; import os; print(os.path.join(os.path.dirname(litellm.__file__), 'proxy', 'schema.prisma'))")
+          echo "Schema: $SCHEMA"
+          prisma generate --schema="$SCHEMA"
+
+      - name: Copy generated client to repo
+        run: |
+          PRISMA_DIR=$(python3 -c "import prisma; import os; print(os.path.dirname(prisma.__file__))")
+          echo "Prisma dir: $PRISMA_DIR"
+          rm -rf prisma_client
+          mkdir -p prisma_client
+          cp -r "$PRISMA_DIR"/* prisma_client/
+
+      - name: Commit generated client
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add prisma_client/
+          git diff --cached --quiet || git commit -m "chore: regenerate prisma client"
+          git push
